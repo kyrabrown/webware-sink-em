@@ -4,15 +4,15 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently --kill-others \"npm run frontend\" \"npm run backend\"",
-    "frontend": "vite",
-    "backend": "node server.js",
+    "dev": "node server.js",
+    "prod": "NODE_ENV=production node server.js",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
     "express": "^5.1.0",
+    "express-ws": "^5.0.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "vite-express": "^0.21.1",

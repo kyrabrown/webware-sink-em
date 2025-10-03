@@ -15,7 +15,7 @@ function App() {
 
   useEffect(() => {
 
-    ws.current = new WebSocket("ws://localhost:3000"); 
+    ws.current = new WebSocket("/ws");
 
     ws.current.onopen = () => {
       console.log("Connected to WS server");
