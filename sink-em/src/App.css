@@ -11,14 +11,15 @@
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(10, 6.5vw); /* # columns, size*/
-  grid-template-rows: repeat(10, 6.5vw);    
+  grid-template-columns: repeat(10, 3vw); /* # columns, size*/
+  grid-template-rows: repeat(10, 3vw);    
   gap: 18px;
 }
 
 .square {
   display: flex;
   align-items: center;
+  color: red;
   justify-content: center;
   background-color: #ddd;
   border: 1px solid #999;
