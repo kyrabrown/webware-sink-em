@@ -144,7 +144,7 @@ app.ws('/ws', async (client, req) => {
     console.log('connect!', game.players.length)
     if (game.players.length <=1){
         const socketID = sockets.push(client) - 1
-        console.log(socketID)
+        console.log("socket id:" + socketID)
         //log new player
         let newPlayer = new Player(game.nextPlayerID, socketID);
         game.players[game.nextPlayerID] = newPlayer
@@ -229,7 +229,7 @@ app.ws('/ws', async (client, req) => {
     client.on("close", async () => {
         console.log("Player disconnected:", client.playerID);
         game.players.splice(client.playerID, 1);
-        sockets.splice(socketID, 1)
+        sockets.splice(game.players[client.playerID].ws, 1)
         await gameData.replaceOne({_id: objectID}, game)
     });
 
