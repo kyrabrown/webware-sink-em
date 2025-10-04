@@ -24,7 +24,7 @@ const gameData = client.db("webware-sink-em").collection("games")
 
 const app = express()
 expressWs(app)
-const clients = [] //for now, assume only 2 clients
+let sockets = [] //for now, assume only 2 clients
 
 class Player {
   constructor(id, ws) {
@@ -39,18 +39,18 @@ class Player {
 }
 
 class Game {
-  constructor() {
-    this.nextPlayerID = 0 
-    this.players = []
-    this.isGameWaiting = 1
-    this.isPlacingShips = 0 
-    this.isFiring = 0 
-    this.isEnd = 0
-    this.winner = ''
+  constructor(nextPlayerID, players, isGameWaiting, isPlacingShips, isFiring, isEnd, winner) {
+    this.nextPlayerID = nextPlayerID || 0
+    this.players = players || []
+    this.isGameWaiting = isGameWaiting || 1
+    this.isPlacingShips = isPlacingShips || 0
+    this.isFiring = isFiring || 0
+    this.isEnd = isEnd || 0
+    this.winner = winner || ''
   }
 
-  getOpponent(player) {
-    if(player.id == 0) {
+  getOpponent(playerid) {
+    if(playerid == 0) {
       return this.players[1]
     }
     else {
@@ -58,13 +58,13 @@ class Game {
     }
   }
 
-  isAWinner(player, opponent) {
+  isAWinner(playerid, opponentid) {
     for (let i = 0; i < 10; i++) {
       for (let j = 0; j < 10; j++) {
 
         // if opponent has a ship, but player's guessesBoard does not have a hit here
-        if (opponent.personalBoard[i][j] === 'S' && player.guessesBoard[i][j] !== 'H') {
-          return false; 
+        if (this.players[opponentid].personalBoard[i][j] === 'S' && this.players[playerid].guessesBoard[i][j] !== 'H') {
+          return false;
         }
 
       }
@@ -72,8 +72,8 @@ class Game {
   return true; // all hits match with ships
   }
 
-  handleReady(player) {
-    player.isReady = true
+  handleReady(playerid) {
+    this.players[playerid].isReady = true
 
     //check if both are ready, if so, begin!
     if(this.players.length == 2 && this.players[0].isReady && this.players[1].isReady ) {
@@ -82,10 +82,10 @@ class Game {
     }
   }
 
-  handlePlacement(player, placements) {
-    //update player's placement board 
-    player.personalBoard = placements
-    player.hasPlaced = true
+  handlePlacement(playerid, placements) {
+    //update player's placement board
+    this.players[playerid].personalBoard = placements
+    this.players[playerid].hasPlaced = true
 
     //check if both are in, if so, begin firing stage!
     if(this.players.length == 2 && this.players[0].hasPlaced && this.players[1].hasPlaced ) {
@@ -94,43 +94,83 @@ class Game {
     }
   }
 
-  handleFiringGuess(player, x, y) {
+  handleFiringGuess(playerid, x, y) {
     //determine if player's guess was a hit or miss and update guess board
-    let opponent = this.getOpponent(player)
+    let opponent = this.getOpponent(playerid)
 
     if(opponent.personalBoard[x][y] === 'S') {
       //guess was a hit
-      player.guessesBoard[x][y] === 'H'
+      this.players[playerid].guessesBoard[x][y] = 'H'
     }
     else {
       //guess was a miss
-      player.guessesBoard[x][y] === 'M'
+      this.players[playerid].guessesBoard[x][y] = 'M'
     }
 
     //check if the player has won
-    if(this.isAWinner(player, opponent)) {
+    if(this.isAWinner(playerid, opponent)) {
       //if a winner, change game flags
-      this.isFiring = 0 
+      this.isFiring = 0
       this.isEnd = 1
-      this.winner = player.id //change to display name later
+      this.winner = playerid //change to display name later
     }
   }
 }
 
 let game = new Game()
-app.ws('/ws', (client, req) => {
 
+app.get('/create', async (req, res) => {
+    let game = new Game()
+    const insertedGame = await gameData.insertOne(game)
+    console.log(JSON.stringify(insertedGame))
+    res.send(insertedGame.insertedId)
+})
+
+app.ws('/ws', async (client, req) => {
+    const objectID = new ObjectId(req.query.id)
+
+    let retrievedGame = await gameData.findOne({
+        _id: objectID
+    })
+    game = new Game(
+        retrievedGame.nextPlayerID,
+        retrievedGame.players,
+        retrievedGame.isGameWaiting,
+        retrievedGame.isPlacingShips,
+        retrievedGame.isFiring,
+        retrievedGame.isEnd,
+        retrievedGame.winner
+    )
     console.log('connect!', game.players.length)
+    if (game.players.length <=1){
+        const socketID = sockets.push(client) - 1
+        console.log(socketID)
+        //log new player
+        let newPlayer = new Player(game.nextPlayerID, socketID);
+        game.players[game.nextPlayerID] = newPlayer
+        client.playerID = newPlayer.id
+        game.nextPlayerID++
+        await gameData.replaceOne({_id: objectID}, game)
+        client.send(JSON.stringify({type: 'Waiting', payload: {Waiting: true}}));
+    }else{
+        client.send(JSON.stringify({type: 'Full', payload: {Full: true}}));
+    }
 
-    //log new player
-    let newPlayer = new Player(game.nextPlayerID, client);
-    game.players[game.nextPlayerID] = newPlayer
-    client.player = newPlayer
-    game.nextPlayerID++
-    client.send(JSON.stringify({type: 'Waiting', payload: {Waiting: true}}));
 
     // when the server receives a new message from this client...
-    client.on('message', msgSent => {
+    client.on('message', async msgSent => {
+        retrievedGame = await gameData.findOne({
+            _id: objectID
+        })
+        game = new Game(
+            retrievedGame.nextPlayerID,
+            retrievedGame.players,
+            retrievedGame.isGameWaiting,
+            retrievedGame.isPlacingShips,
+            retrievedGame.isFiring,
+            retrievedGame.isEnd,
+            retrievedGame.winner
+        )
         let msg;
         try {
             msg = JSON.parse(msgSent);
@@ -139,16 +179,16 @@ app.ws('/ws', (client, req) => {
             return;
         }
         const {type, payload} = msg;
-        let opponent = game.getOpponent(client.player)
+        let opponent = game.getOpponent(client.playerID)
 
         //parse based on message type and handle from there
         if (type === "Ready") {
-            game.handleReady(client.player)
+            game.handleReady(client.playerID)
 
             //send signal to begin placing ships if both ready
             if (!game.isGameWaiting && game.isPlacingShips) {
                 client.send(JSON.stringify({type: 'StartPlacing', payload: {StartPlacing: true}}));
-                opponent.ws.send(JSON.stringify({type: 'StartPlacing', payload: {StartPlacing: true}}));
+                sockets[opponent.ws].send(JSON.stringify({type: 'StartPlacing', payload: {StartPlacing: true}}));
             }
 
             //else, send signal to continue waiting
@@ -156,40 +196,41 @@ app.ws('/ws', (client, req) => {
                 client.send(JSON.stringify({type: 'Waiting', payload: {Waiting: true}}));
 
                 if (opponent) {
-                    opponent.ws.send(JSON.stringify({type: 'Waiting', payload: {Waiting: true}}));
+                    sockets[opponent.ws].send(JSON.stringify({type: 'Waiting', payload: {Waiting: true}}));
                 }
             }
         } else if (type === "Placed") {
-          game.handlePlacement(client.player, payload.Placements)
+            game.handlePlacement(client.playerID, payload.Placements)
 
-          //send signal to begin the firing stage if both players have their placements in
-          if (!game.isPlacingShips && game.isFiring) {
-              client.send(JSON.stringify({type: 'Firing', payload: {YourTurn: true}}));
-              opponent.ws.send(JSON.stringify({type: 'Firing', payload: {YourTurn: false}}));
-          }
+            //send signal to begin the firing stage if both players have their placements in
+            if (!game.isPlacingShips && game.isFiring) {
+                client.send(JSON.stringify({type: 'Firing', payload: {YourTurn: true}}));
+                sockets[opponent.ws].send(JSON.stringify({type: 'Firing', payload: {YourTurn: false}}));
+            }
         } else if (type === "FiringGuess") {
-          game.handleFiringGuess(client.player, payload.GuessX, payload.GuessY)
+            game.handleFiringGuess(client.playerID, payload.GuessX, payload.GuessY)
 
-          //if game is not over, send signal to users to give next guess
-          if(game.isFiring && !game.isEnd) {
-            client.send(JSON.stringify({type: 'Firing', payload: {YourTurn: false}}));
-            opponent.ws.send(JSON.stringify({type: 'Firing', payload: {YourTurn: true}}));
-          }
+            //if game is not over, send signal to users to give next guess
+            if (game.isFiring && !game.isEnd) {
+                client.send(JSON.stringify({type: 'Firing', payload: {YourTurn: false}}));
+                sockets[opponent.ws].send(JSON.stringify({type: 'Firing', payload: {YourTurn: true}}));
+            }
 
-          //if game is over, send signal to users
-          else if(game.isEnd) {
-            client.send(JSON.stringify({type: 'End', payload: {Winner: game.winner}}));
-            opponent.ws.send(JSON.stringify({type: 'End', payload: {Winner: game.winner}}));
-          }
+            //if game is over, send signal to users
+            else if (game.isEnd) {
+                client.send(JSON.stringify({type: 'End', payload: {Winner: game.winner}}));
+                sockets[opponent.ws].send(JSON.stringify({type: 'End', payload: {Winner: game.winner}}));
+            }
         }
-
+        await gameData.replaceOne({_id: objectID}, game)
     })
 
     //on a disconnect....
-    client.on("close", () => {
-        console.log("Player disconnected:", client.player.id);
-        delete game.players[client.player.id];
-
+    client.on("close", async () => {
+        console.log("Player disconnected:", client.playerID);
+        game.players.splice(client.playerID, 1);
+        sockets.splice(socketID, 1)
+        await gameData.replaceOne({_id: objectID}, game)
     });
 
 })

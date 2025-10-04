@@ -16,7 +16,7 @@ function App() {
 
   useEffect(() => {
 
-    ws.current = new WebSocket("/ws");
+    ws.current = new WebSocket("/ws?id=68e17a66ff1e9cc732e9ef69");
 
     ws.current.onopen = () => {
       console.log("Connected to WS server");
@@ -35,6 +35,9 @@ function App() {
         if(type === "Waiting") {
           setUserMessage(type)
         }
+          else if(type === "Full") {
+              setUserMessage(type)
+          }
         else if (type === "StartPlacing") {
           setUserMessage(type)
 
