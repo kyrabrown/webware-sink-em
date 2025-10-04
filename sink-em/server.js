@@ -8,7 +8,19 @@ connected clients
 import express from 'express'
 import ViteExpress from 'vite-express'
 import expressWs from 'express-ws'
-
+import {MongoClient, ServerApiVersion, ObjectId} from 'mongodb'
+import dotenv from 'dotenv'
+dotenv.config({quiet: true})
+const user = process.env.DB_USER
+const pass = process.env.DB_PASSWORD
+const url = process.env.DB_URL
+const uri = `mongodb+srv://${user}:${pass}@${url}/?retryWrites=true&w=majority&appName=Cluster0`;
+const client = new MongoClient(uri, {
+    serverApi: {
+        version: ServerApiVersion.v1, strict: true, deprecationErrors: true,
+    }
+});
+const gameData = client.db("webware-sink-em").collection("games")
 
 const app = express()
 expressWs(app)
