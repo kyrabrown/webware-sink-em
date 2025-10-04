@@ -6,15 +6,13 @@ connected clients
 */
 
 import express from 'express'
-import http from 'http'
 import ViteExpress from 'vite-express'
-import { WebSocketServer } from 'ws'
+import expressWs from 'express-ws'
+
 
 const app = express()
-
-const server = http.createServer( app ),
-      socketServer = new WebSocketServer({ server }),
-      clients = [] //for now, assume only 2 clients 
+expressWs(app)
+const clients = [] //for now, assume only 2 clients
 
 class Player {
   constructor(id, ws) {
@@ -85,69 +83,67 @@ class Game {
 }
 
 let game = new Game()
+app.ws('/ws', (client, req) => {
 
-socketServer.on( 'connection', client => {
-  console.log( 'connect!', game.players.length )
-    
-  //log new player
-  let newPlayer = new Player(game.nextPlayerID, client); 
-  game.players[game.nextPlayerID] = newPlayer
-  client.player = newPlayer
-  game.nextPlayerID++ 
-  client.send(JSON.stringify({ type:'Waiting', payload: { Waiting: true }}));
+    console.log('connect!', game.players.length)
 
-  // when the server receives a new message from this client...
-  client.on( 'message', msgSent => {
-    let msg;
-    try { 
-      msg = JSON.parse(msgSent); 
-    } 
-    catch(e) { 
-      client.send(JSON.stringify({ type:'error', payload: { message:'bad json' }})); 
-      return; 
-    }
-    const { type, payload } = msg;
-    let opponent = game.getOpponent(client.player)
+    //log new player
+    let newPlayer = new Player(game.nextPlayerID, client);
+    game.players[game.nextPlayerID] = newPlayer
+    client.player = newPlayer
+    game.nextPlayerID++
+    client.send(JSON.stringify({type: 'Waiting', payload: {Waiting: true}}));
 
-    //parse based on message type and handle from there
-    if(type === "Ready") {
-      game.handleReady(client.player)
-
-      //send signal to begin placing ships if both ready
-      if(!game.isGameWaiting && game.isPlacingShips) {
-        client.send(JSON.stringify({ type:'StartPlacing', payload: { StartPlacing: true }}));
-        opponent.ws.send(JSON.stringify({ type:'StartPlacing', payload: { StartPlacing: true }}));
-      }
-
-      //else, send signal to continue waiting
-      else {
-        client.send(JSON.stringify({ type:'Waiting', payload: { Waiting: true }}));
-        
-        if (opponent) {
-          opponent.ws.send(JSON.stringify({ type:'Waiting', payload: { Waiting: true }}));
+    // when the server receives a new message from this client...
+    client.on('message', msgSent => {
+        let msg;
+        try {
+            msg = JSON.parse(msgSent);
+        } catch (e) {
+            client.send(JSON.stringify({type: 'error', payload: {message: 'bad json'}}));
+            return;
         }
-      }
-    }
-    else if (type === "Placed") {
-      game.handlePlacement(client.player, payload)
+        const {type, payload} = msg;
+        let opponent = game.getOpponent(client.player)
 
-      //send signal to begin the firing stage if both players have their placements in
-      if(!game.isPlacingShips && game.isFiring) {
-        client.send(JSON.stringify({ type:'Firing', payload: { YourTurn: true }}));
-        opponent.ws.send(JSON.stringify({ type:'Firing', payload: { YourTurn: false }}));
-      }
-    }
+        //parse based on message type and handle from there
+        if (type === "Ready") {
+            game.handleReady(client.player)
 
-  })
+            //send signal to begin placing ships if both ready
+            if (!game.isGameWaiting && game.isPlacingShips) {
+                client.send(JSON.stringify({type: 'StartPlacing', payload: {StartPlacing: true}}));
+                opponent.ws.send(JSON.stringify({type: 'StartPlacing', payload: {StartPlacing: true}}));
+            }
 
-  //on a disconnect....
-  client.on("close", () => {
-    console.log("Player disconnected:", client.player.id);
-    delete game.players[client.player.id];
+            //else, send signal to continue waiting
+            else {
+                client.send(JSON.stringify({type: 'Waiting', payload: {Waiting: true}}));
 
-  });
+                if (opponent) {
+                    opponent.ws.send(JSON.stringify({type: 'Waiting', payload: {Waiting: true}}));
+                }
+            }
+        } else if (type === "Placed") {
+            game.handlePlacement(client.player, payload)
+
+            //send signal to begin the firing stage if both players have their placements in
+            if (!game.isPlacingShips && game.isFiring) {
+                client.send(JSON.stringify({type: 'Firing', payload: {YourTurn: true}}));
+                opponent.ws.send(JSON.stringify({type: 'Firing', payload: {YourTurn: false}}));
+            }
+        }
+
+    })
+
+    //on a disconnect....
+    client.on("close", () => {
+        console.log("Player disconnected:", client.player.id);
+        delete game.players[client.player.id];
+
+    });
+
 })
 
-server.listen( 3000 )
 
-ViteExpress.bind( app, server )
+ViteExpress.listen(app, 3000, () => console.log("Server is listening..."));
