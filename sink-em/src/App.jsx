@@ -10,6 +10,7 @@ function App() {
   const [isPlacing, setIsPlacing] = useState(false)
   const [isFiring, setIsFiring] = useState(false)
   const [isMyFireTurn, setIsMyFireTurn] = useState(false)
+  const [isGameEnded, setIsGameEnded] = useState(false)
 
   const ws = useRef(null);
 
@@ -42,14 +43,35 @@ function App() {
           setIsPlacing(true)
         }
         else if (type == "Firing") {
-          setUserMessage(type)
+          setUserMessage(type + payload.YourTurn)
           
           //start the firing stage of the game!
           setIsPlacing(false)
           setIsFiring(true)
 
           //check if current player's turn
-        
+          if(payload.YourTurn) {
+            //do firing functionality to get user's guess square coordinates
+            setIsMyFireTurn(true)
+
+            //after firing has completed, send coordinates of square back to the server
+
+            let x = 5
+            let y = 5 //dummy values for now
+            sendFiringSquare(x, y)
+            setIsMyFireTurn(false)
+          }
+          else {
+            //wait on other user to fire
+            setIsMyFireTurn(false)
+          }
+        }
+        else if (type === "End") {
+          //game has ended, display winner 
+          console.log(payload.Winner)
+          setIsMyFireTurn(false)
+          setIsFiring(false)
+          setIsGameEnded(true)
         }
         else {
           setUserMessage(type)
@@ -71,7 +93,7 @@ function App() {
   const updateSquareChoicePlacing = (x, y) => {
     //update grid
     const tempGrid = placingGridVals.map(row => [...row]);
-    tempGrid[x][y] = 'X'
+    tempGrid[x][y] = 'S'
     setPlacingGridVals(tempGrid)
   };
 
@@ -90,7 +112,13 @@ function App() {
   const submitPlacements = () => {
     console.log("sending placement grid")
     const tempGrid = placingGridVals.map(row => [...row]);
+    console.log("placing grid cals", placingGridVals)
     ws.current.send(JSON.stringify({ type:'Placed', payload: { Placements: placingGridVals }}));
+  }
+
+  const sendFiringSquare = (x, y) => {
+    console.log("sending firing guess square:", x, y)
+    ws.current.send(JSON.stringify({ type:'FiringGuess', payload: { GuessX: x, GuessY: y }}));
   }
 
   return (
@@ -100,18 +128,29 @@ function App() {
       {isWaitingForReady ? <button onClick={sendReadyToStart}> Ready </button> : ''}
       {isPlacing ? 
         (<div> 
-            <Grid gridVals={placingGridVals} updateSquareChoice={updateSquareChoicePlacing}></Grid> 
+            <Grid gridVals={placingGridVals} handleSquareChoice={updateSquareChoicePlacing}></Grid> 
             <button onClick={submitPlacements}> Submit Placements </button>
           </div>
         )
         : ''}
-      {isFiring ? 
+      {isFiring && isMyFireTurn ? 
         (<div> 
-            <Grid gridVals={firingGridVals} updateSquareChoice={updateSquareChoiceFiring}></Grid> 
+            <p> Choose a square to fire at....</p>
+            <Grid gridVals={firingGridVals} handleSquareChoice={updateSquareChoiceFiring}></Grid> 
             <button onClick={submitPlacements}> Submit Fire Location </button>
           </div>
         )
         : ''}
+      {isFiring && !isMyFireTurn ? 
+        (<div> 
+            <p> Waiting for other user's guess....</p>
+            <Grid gridVals={placingGridVals} handleSquareChoice={console.log(`Clicked square`)}></Grid> 
+          </div>
+        )
+        : ''}
+      {isGameEnded ? (
+       <p> Game has ended</p>) : ''
+      }
     </div>
   );
 }
