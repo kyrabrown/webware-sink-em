@@ -29,28 +29,13 @@ const clients = [] //for now, assume only 2 clients
 class Player {
   constructor(id, ws) {
     this.id = id
+    this.displayName = "Guest"
     this.isReady = false
     this.ws = ws
     this.hasPlaced = false
     this.personalBoard = Array.from({ length: 10 }, () => Array(10).fill(null))
     this.guessesBoard = Array.from({ length: 10 }, () => Array(10).fill(null))
   }
-
-  handleMessage(msg) {
-    // const text = msg.toString(); 
-
-    // //update grid
-    // const [x, y] = JSON.parse(msg.toString());
-    // grid[x][y] = 'X'
-
-    // //send grid
-    // clients.forEach((c) => {
-    //     if (c !== client && c.readyState === 1) {
-    //         c.send(JSON.stringify(grid));
-    //     }
-    // });
-  }
-
 }
 
 class Game {
@@ -60,6 +45,8 @@ class Game {
     this.isGameWaiting = 1
     this.isPlacingShips = 0 
     this.isFiring = 0 
+    this.isEnd = 0
+    this.winner = ''
   }
 
   getOpponent(player) {
@@ -69,6 +56,20 @@ class Game {
     else {
       return this.players[0]
     }
+  }
+
+  isAWinner(player, opponent) {
+    for (let i = 0; i < 10; i++) {
+      for (let j = 0; j < 10; j++) {
+
+        // if opponent has a ship, but player's guessesBoard does not have a hit here
+        if (opponent.personalBoard[i][j] === 'S' && player.guessesBoard[i][j] !== 'H') {
+          return false; 
+        }
+
+      }
+    }
+  return true; // all hits match with ships
   }
 
   handleReady(player) {
@@ -90,6 +91,28 @@ class Game {
     if(this.players.length == 2 && this.players[0].hasPlaced && this.players[1].hasPlaced ) {
       this.isPlacingShips = 0
       this.isFiring = 1
+    }
+  }
+
+  handleFiringGuess(player, x, y) {
+    //determine if player's guess was a hit or miss and update guess board
+    let opponent = this.getOpponent(player)
+
+    if(opponent.personalBoard[x][y] === 'S') {
+      //guess was a hit
+      player.guessesBoard[x][y] === 'H'
+    }
+    else {
+      //guess was a miss
+      player.guessesBoard[x][y] === 'M'
+    }
+
+    //check if the player has won
+    if(this.isAWinner(player, opponent)) {
+      //if a winner, change game flags
+      this.isFiring = 0 
+      this.isEnd = 1
+      this.winner = player.id //change to display name later
     }
   }
 }
@@ -137,13 +160,27 @@ app.ws('/ws', (client, req) => {
                 }
             }
         } else if (type === "Placed") {
-            game.handlePlacement(client.player, payload)
+          game.handlePlacement(client.player, payload.Placements)
 
-            //send signal to begin the firing stage if both players have their placements in
-            if (!game.isPlacingShips && game.isFiring) {
-                client.send(JSON.stringify({type: 'Firing', payload: {YourTurn: true}}));
-                opponent.ws.send(JSON.stringify({type: 'Firing', payload: {YourTurn: false}}));
-            }
+          //send signal to begin the firing stage if both players have their placements in
+          if (!game.isPlacingShips && game.isFiring) {
+              client.send(JSON.stringify({type: 'Firing', payload: {YourTurn: true}}));
+              opponent.ws.send(JSON.stringify({type: 'Firing', payload: {YourTurn: false}}));
+          }
+        } else if (type === "FiringGuess") {
+          game.handleFiringGuess(client.player, payload.GuessX, payload.GuessY)
+
+          //if game is not over, send signal to users to give next guess
+          if(game.isFiring && !game.isEnd) {
+            client.send(JSON.stringify({type: 'Firing', payload: {YourTurn: false}}));
+            opponent.ws.send(JSON.stringify({type: 'Firing', payload: {YourTurn: true}}));
+          }
+
+          //if game is over, send signal to users
+          else if(game.isEnd) {
+            client.send(JSON.stringify({type: 'End', payload: {Winner: game.winner}}));
+            opponent.ws.send(JSON.stringify({type: 'End', payload: {Winner: game.winner}}));
+          }
         }
 
     })
