@@ -16,7 +16,7 @@ function App() {
 
   useEffect(() => {
 
-    ws.current = new WebSocket("/ws?id=68e17ba5b244e21f5d034032");
+    ws.current = new WebSocket("/ws?id=68e1821413df8b15b4f0d4a2");
 
     ws.current.onopen = () => {
       console.log("Connected to WS server");

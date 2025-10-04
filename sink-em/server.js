@@ -140,6 +140,9 @@ app.ws('/ws', async (client, req) => {
         retrievedGame.isEnd,
         retrievedGame.winner
     )
+    const updateGameInMongo = async () => {
+        await gameData.replaceOne({_id: objectID}, game)
+    }
     console.log('connect!', game.players.length)
     const isFull = game.players.length > 1
     if (!isFull) {
@@ -150,7 +153,7 @@ app.ws('/ws', async (client, req) => {
         game.players[game.nextPlayerID] = newPlayer
         client.playerID = newPlayer.id
         game.nextPlayerID++
-        await gameData.replaceOne({_id: objectID}, game)
+        await updateGameInMongo()
         client.send(JSON.stringify({type: 'Waiting', payload: {Waiting: true}}));
     } else {
         client.send(JSON.stringify({type: 'Full', payload: {Full: true}}));
@@ -223,7 +226,7 @@ app.ws('/ws', async (client, req) => {
                     sockets[opponent.ws].send(JSON.stringify({type: 'End', payload: {Winner: game.winner}}));
                 }
             }
-            await gameData.replaceOne({_id: objectID}, game)
+            await updateGameInMongo()
         }
     })
 
@@ -231,9 +234,9 @@ app.ws('/ws', async (client, req) => {
     client.on("close", async () => {
         if (client.hasOwnProperty("playerID")) {
             console.log("Player disconnected:", client.playerID);
-            game.players.splice(client.playerID, 1);
             sockets.splice(game.players[client.playerID].ws, 1)
-            await gameData.replaceOne({_id: objectID}, game)
+            game.players.splice(client.playerID, 1);
+            await updateGameInMongo()
         }
     });
 
