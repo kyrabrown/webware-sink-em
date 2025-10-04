@@ -14,14 +14,14 @@ function GridSquare({ row, col, onClick, value }) {
 }
 
 
-export default function Grid({gridVals, updateSquareChoice}) {
+export default function Grid({gridVals, handleSquareChoice}) {
 
   // Handle square click
   const handleClick = (row, col) => {
 
     console.log(`Clicked square at row ${row}, col ${col}`);
 
-    updateSquareChoice(row, col)
+    handleSquareChoice(row, col)
   };
 
   return (
