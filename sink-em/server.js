@@ -108,7 +108,7 @@ class Game {
     }
 
     //check if the player has won
-    if(this.isAWinner(playerid, opponent)) {
+    if(this.isAWinner(playerid, opponent.id)) {
       //if a winner, change game flags
       this.isFiring = 0
       this.isEnd = 1
