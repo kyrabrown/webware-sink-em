@@ -50,20 +50,20 @@ class Game {
         this.winner = winner || ''
     }
 
-    getOpponent(playerid) {
-        if (playerid == 0) {
+    getOpponent(playerID) {
+        if (playerID === 0) {
             return this.players[1]
         } else {
             return this.players[0]
         }
     }
 
-    isAWinner(playerid, opponentid) {
+    isAWinner(playerID, opponentID) {
         for (let i = 0; i < 10; i++) {
             for (let j = 0; j < 10; j++) {
 
                 // if opponent has a ship, but player's guessesBoard does not have a hit here
-                if (this.players[opponentid].personalBoard[i][j] === 'S' && this.players[playerid].guessesBoard[i][j] !== 'H') {
+                if (this.players[opponentID].personalBoard[i][j] === 'S' && this.players[playerID].guessesBoard[i][j] !== 'H') {
                     return false;
                 }
 
@@ -72,46 +72,46 @@ class Game {
         return true; // all hits match with ships
     }
 
-    handleReady(playerid) {
-        this.players[playerid].isReady = true
+    handleReady(playerID) {
+        this.players[playerID].isReady = true
 
         //check if both are ready, if so, begin!
-        if (this.players.length == 2 && this.players[0].isReady && this.players[1].isReady) {
+        if (this.players.length === 2 && this.players[0].isReady && this.players[1].isReady) {
             this.isGameWaiting = 0
             this.isPlacingShips = 1
         }
     }
 
-    handlePlacement(playerid, placements) {
+    handlePlacement(playerID, placements) {
         //update player's placement board
-        this.players[playerid].personalBoard = placements
-        this.players[playerid].hasPlaced = true
+        this.players[playerID].personalBoard = placements
+        this.players[playerID].hasPlaced = true
 
         //check if both are in, if so, begin firing stage!
-        if (this.players.length == 2 && this.players[0].hasPlaced && this.players[1].hasPlaced) {
+        if (this.players.length === 2 && this.players[0].hasPlaced && this.players[1].hasPlaced) {
             this.isPlacingShips = 0
             this.isFiring = 1
         }
     }
 
-    handleFiringGuess(playerid, x, y) {
+    handleFiringGuess(playerID, x, y) {
         //determine if player's guess was a hit or miss and update guess board
-        let opponent = this.getOpponent(playerid)
+        let opponent = this.getOpponent(playerID)
 
         if (opponent.personalBoard[x][y] === 'S') {
             //guess was a hit
-            this.players[playerid].guessesBoard[x][y] = 'H'
+            this.players[playerID].guessesBoard[x][y] = 'H'
         } else {
             //guess was a miss
-            this.players[playerid].guessesBoard[x][y] = 'M'
+            this.players[playerID].guessesBoard[x][y] = 'M'
         }
 
         //check if the player has won
-        if (this.isAWinner(playerid, opponent.id)) {
+        if (this.isAWinner(playerID, opponent.id)) {
             //if a winner, change game flags
             this.isFiring = 0
             this.isEnd = 1
-            this.winner = playerid //change to display name later
+            this.winner = playerID //change to display name later
         }
     }
 }
