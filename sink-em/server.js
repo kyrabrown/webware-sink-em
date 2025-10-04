@@ -234,8 +234,11 @@ app.ws('/ws', async (client, req) => {
     client.on("close", async () => {
         if (client.hasOwnProperty("playerID")) {
             console.log("Player disconnected:", client.playerID);
-            sockets.splice(game.players[client.playerID].ws, 1)
-            game.players.splice(client.playerID, 1);
+            const removedSocket = sockets.splice(game.players[client.playerID].ws, 1)
+            console.log("removed " + removedSocket.length + " socket")
+            const removedGamePlayer = game.players.splice(client.playerID, 1);
+            console.log("removed player with ID "+ removedGamePlayer[0].id)
+            game.nextPlayerID--
             await updateGameInMongo()
         }
     });
