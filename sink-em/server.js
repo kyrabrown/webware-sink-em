@@ -116,7 +116,6 @@ class Game {
     }
 }
 
-let game = new Game()
 
 app.get('/create', async (req, res) => {
     let game = new Game()
@@ -126,6 +125,7 @@ app.get('/create', async (req, res) => {
 
 app.ws('/ws', async (client, req) => {
     const objectID = new ObjectId(req.query.id)
+    let game;
     const retrieveGame = async () => {
         const retrievedGame = await gameData.findOne({
             _id: objectID
@@ -271,7 +271,7 @@ app.ws('/ws', async (client, req) => {
             console.log("Player disconnected:", client.playerID);
             const opponent = game.getOpponent(client.playerID)
             const player = game.players[client.playerID]
-            if (player){
+            if (player) {
                 delete sockets[game.players[client.playerID].ws]
             }
             if (opponent && sockets[opponent.ws]) {
