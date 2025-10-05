@@ -111,10 +111,10 @@ function App() {
 
     const makeGame = async () => {
         const res = await fetch("/create", {method: "GET"})
-        const code = (await res.text()).replaceAll("\"", "")
-        setGameCode(code)
+        const json = JSON.parse((await res.text()))
+        setGameCode(json.code)
         setGameCreated(true)
-        makeNewWS(code)
+        makeNewWS(json.code)
     }
 
     const joinGame = async () => {

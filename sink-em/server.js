@@ -10,6 +10,7 @@ import ViteExpress from 'vite-express'
 import expressWs from 'express-ws'
 import {MongoClient, ObjectId, ServerApiVersion} from 'mongodb'
 import dotenv from 'dotenv'
+import js from "@eslint/js";
 
 dotenv.config({quiet: true})
 const user = process.env.DB_USER
@@ -120,7 +121,8 @@ class Game {
 app.get('/create', async (req, res) => {
     let game = new Game()
     const insertedGame = await gameData.insertOne(game)
-    res.send(insertedGame.insertedId)
+    const json = {code: insertedGame.insertedId}
+    res.json(json)
 })
 
 app.ws('/ws', async (client, req) => {
