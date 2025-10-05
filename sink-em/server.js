@@ -25,7 +25,7 @@ const gameData = client.db("webware-sink-em").collection("games")
 
 const app = express()
 expressWs(app)
-let sockets = [] //for now, assume only 2 clients
+let sockets = {}
 
 class Player {
     constructor(id, ws) {
@@ -42,7 +42,7 @@ class Player {
 class Game {
     constructor(nextPlayerID, players, isGameWaiting, isPlacingShips, isFiring, isEnd, winner) {
         this.nextPlayerID = nextPlayerID || 0
-        this.players = players || []
+        this.players = players || {}
         this.isGameWaiting = isGameWaiting || 1
         this.isPlacingShips = isPlacingShips || 0
         this.isFiring = isFiring || 0
@@ -76,7 +76,7 @@ class Game {
         this.players[playerID].isReady = true
 
         //check if both are ready, if so, begin!
-        if (this.players.length === 2 && this.players[0].isReady && this.players[1].isReady) {
+        if (Object.keys(this.players).length === 2 && this.players[0].isReady && this.players[1].isReady) {
             this.isGameWaiting = 0
             this.isPlacingShips = 1
         }
@@ -88,7 +88,7 @@ class Game {
         this.players[playerID].hasPlaced = true
 
         //check if both are in, if so, begin firing stage!
-        if (this.players.length === 2 && this.players[0].hasPlaced && this.players[1].hasPlaced) {
+        if (Object.keys(this.players).length === 2 && this.players[0].hasPlaced && this.players[1].hasPlaced) {
             this.isPlacingShips = 0
             this.isFiring = 1
         }
@@ -121,32 +121,39 @@ let game = new Game()
 app.get('/create', async (req, res) => {
     let game = new Game()
     const insertedGame = await gameData.insertOne(game)
-    console.log(JSON.stringify(insertedGame))
     res.send(insertedGame.insertedId)
 })
 
 app.ws('/ws', async (client, req) => {
     const objectID = new ObjectId(req.query.id)
+    const retrieveGame = async () => {
+        const retrievedGame = await gameData.findOne({
+            _id: objectID
+        })
+        game = new Game(
+            retrievedGame.nextPlayerID,
+            retrievedGame.players,
+            retrievedGame.isGameWaiting,
+            retrievedGame.isPlacingShips,
+            retrievedGame.isFiring,
+            retrievedGame.isEnd,
+            retrievedGame.winner
+        )
+    }
+    await retrieveGame()
 
-    let retrievedGame = await gameData.findOne({
-        _id: objectID
-    })
-    game = new Game(
-        retrievedGame.nextPlayerID,
-        retrievedGame.players,
-        retrievedGame.isGameWaiting,
-        retrievedGame.isPlacingShips,
-        retrievedGame.isFiring,
-        retrievedGame.isEnd,
-        retrievedGame.winner
-    )
     const updateGameInMongo = async () => {
         await gameData.replaceOne({_id: objectID}, game)
     }
-    console.log('connect!', game.players.length)
-    const isFull = game.players.length > 1
+    const resetGame = async () => {
+        game = new Game()
+        await gameData.replaceOne({_id: objectID}, game)
+    }
+    console.log('connect!', Object.keys(game.players).length)
+    const isFull = Object.keys(game.players).length > 1
     if (!isFull) {
-        const socketID = sockets.push(client) - 1
+        const socketID = crypto.randomUUID()
+        sockets[socketID] = client
         console.log("socket id:" + socketID)
         //log new player
         let newPlayer = new Player(game.nextPlayerID, socketID);
@@ -163,18 +170,7 @@ app.ws('/ws', async (client, req) => {
     // when the server receives a new message from this client...
     client.on('message', async msgSent => {
         if (client.hasOwnProperty("playerID")) {
-            retrievedGame = await gameData.findOne({
-                _id: objectID
-            })
-            game = new Game(
-                retrievedGame.nextPlayerID,
-                retrievedGame.players,
-                retrievedGame.isGameWaiting,
-                retrievedGame.isPlacingShips,
-                retrievedGame.isFiring,
-                retrievedGame.isEnd,
-                retrievedGame.winner
-            )
+            await retrieveGame()
             let msg;
             try {
                 msg = JSON.parse(msgSent);
@@ -192,7 +188,15 @@ app.ws('/ws', async (client, req) => {
                 //send signal to begin placing ships if both ready
                 if (!game.isGameWaiting && game.isPlacingShips) {
                     client.send(JSON.stringify({type: 'StartPlacing', payload: {StartPlacing: true}}));
-                    sockets[opponent.ws].send(JSON.stringify({type: 'StartPlacing', payload: {StartPlacing: true}}));
+                    try {
+                        sockets[opponent.ws].send(JSON.stringify({
+                            type: 'StartPlacing',
+                            payload: {StartPlacing: true}
+                        }));
+                    } catch (e) {
+                        console.error("Client disconnected during a game")
+                        await resetGame()
+                    }
                 }
 
                 //else, send signal to continue waiting
@@ -200,30 +204,60 @@ app.ws('/ws', async (client, req) => {
                     client.send(JSON.stringify({type: 'Waiting', payload: {Waiting: true}}));
 
                     if (opponent) {
-                        sockets[opponent.ws].send(JSON.stringify({type: 'Waiting', payload: {Waiting: true}}));
+                        try {
+                            sockets[opponent.ws].send(JSON.stringify({type: 'Waiting', payload: {Waiting: true}}));
+                        } catch (e) {
+                            console.error("Client disconnected during a game")
+                            await resetGame()
+                        }
                     }
                 }
             } else if (type === "Placed") {
                 game.handlePlacement(client.playerID, payload.Placements)
-
                 //send signal to begin the firing stage if both players have their placements in
                 if (!game.isPlacingShips && game.isFiring) {
+                    await updateGameInMongo()
                     client.send(JSON.stringify({type: 'Firing', payload: {YourTurn: true}}));
-                    sockets[opponent.ws].send(JSON.stringify({type: 'Firing', payload: {YourTurn: false}}));
+                    try {
+                        sockets[opponent.ws].send(JSON.stringify({type: 'Firing', payload: {YourTurn: false}}));
+                    } catch (e) {
+                        console.error("Client disconnected during a game")
+                        await resetGame()
+                    }
+
                 }
             } else if (type === "FiringGuess") {
-                game.handleFiringGuess(client.playerID, payload.GuessX, payload.GuessY)
+                try {
+                    game.handleFiringGuess(client.playerID, payload.GuessX, payload.GuessY)
+                    await updateGameInMongo()
+                } catch (e) {
+                    console.log("Client disconnected during a game")
+                    await resetGame()
+                }
+
 
                 //if game is not over, send signal to users to give next guess
                 if (game.isFiring && !game.isEnd) {
                     client.send(JSON.stringify({type: 'Firing', payload: {YourTurn: false}}));
-                    sockets[opponent.ws].send(JSON.stringify({type: 'Firing', payload: {YourTurn: true}}));
+                    try {
+                        sockets[opponent.ws].send(JSON.stringify({type: 'Firing', payload: {YourTurn: true}}));
+                    } catch (e) {
+                        console.error("Client disconnected during a game")
+                        await resetGame()
+                    }
+
                 }
 
                 //if game is over, send signal to users
                 else if (game.isEnd) {
                     client.send(JSON.stringify({type: 'End', payload: {Winner: game.winner}}));
-                    sockets[opponent.ws].send(JSON.stringify({type: 'End', payload: {Winner: game.winner}}));
+                    try {
+                        sockets[opponent.ws].send(JSON.stringify({type: 'End', payload: {Winner: game.winner}}));
+                    } catch (e) {
+                        console.error("Client disconnected during a game")
+                        await resetGame()
+                    }
+
                 }
             }
             await updateGameInMongo()
@@ -232,14 +266,20 @@ app.ws('/ws', async (client, req) => {
 
     //on a disconnect....
     client.on("close", async () => {
+        await retrieveGame()
         if (client.hasOwnProperty("playerID")) {
             console.log("Player disconnected:", client.playerID);
-            const removedSocket = sockets.splice(game.players[client.playerID].ws, 1)
-            console.log("removed " + removedSocket.length + " socket")
-            const removedGamePlayer = game.players.splice(client.playerID, 1);
-            console.log("removed player with ID "+ removedGamePlayer[0].id)
-            game.nextPlayerID--
-            await updateGameInMongo()
+            const opponent = game.getOpponent(client.playerID)
+            const player = game.players[client.playerID]
+            if (player){
+                delete sockets[game.players[client.playerID].ws]
+            }
+            if (opponent && sockets[opponent.ws]) {
+                sockets[opponent.ws].send(JSON.stringify({type: 'Disconnected', payload: {Disconnected: true}}))
+                sockets[opponent.ws].close()
+                delete sockets[opponent.ws]
+            }
+            await resetGame()
         }
     });
 
