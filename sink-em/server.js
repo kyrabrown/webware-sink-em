@@ -10,12 +10,17 @@ import ViteExpress from 'vite-express'
 import expressWs from 'express-ws'
 import {MongoClient, ObjectId, ServerApiVersion} from 'mongodb'
 import dotenv from 'dotenv'
-import js from "@eslint/js";
 
 dotenv.config({quiet: true})
 const user = process.env.DB_USER
 const pass = process.env.DB_PASSWORD
 const url = process.env.DB_URL
+if (!user || !pass || !url) {
+    console.log("Environment variables not set up correctly. Please place .env file with\n" +
+        "credentials inside sink-em folder or paste contents into Render environment\n" +
+        "variables if deploying (download link is in Slack).")
+    process.exit(-1)
+}
 const uri = `mongodb+srv://${user}:${pass}@${url}/?retryWrites=true&w=majority&appName=Cluster0`;
 const client = new MongoClient(uri, {
     serverApi: {
@@ -188,7 +193,7 @@ app.ws('/ws', async (client, req) => {
                 game.handleReady(client.playerID)
 
                 //send signal to begin placing ships if both ready
-            if (!game.isGameWaiting && game.isPlacingShips) {
+                if (!game.isGameWaiting && game.isPlacingShips) {
                     client.send(JSON.stringify({type: 'StartPlacing', payload: {StartPlacing: true}}));
                     try {
                         sockets[opponent.ws].send(JSON.stringify({
@@ -239,7 +244,7 @@ app.ws('/ws', async (client, req) => {
 
 
                 //if game is not over, send signal to users to give next guess
-          if(game.isFiring && !game.isEnd) {
+                if (game.isFiring && !game.isEnd) {
                     client.send(JSON.stringify({type: 'Firing', payload: {YourTurn: false}}));
                     try {
                         sockets[opponent.ws].send(JSON.stringify({type: 'Firing', payload: {YourTurn: true}}));
