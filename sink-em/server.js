@@ -13,6 +13,16 @@ import expressWs from 'express-ws'
 const app = express()
 expressWs(app)
 const clients = [] //for now, assume only 2 clients
+const games = {}
+
+function makeCode () {
+  const chars = 'QWERTYUIOPASDFGHJKLZXCVBNM1234567890'
+  let finCode = ''
+  for (let i = 0; i < 4; i++) {
+                finCode += chars[Math.floor(Math.random() * chars.length)];
+            }
+  return finCode
+}
 
 class Player {
   constructor(id, ws) {
@@ -28,6 +38,7 @@ class Player {
 
 class Game {
   constructor() {
+    this.code = ''
     this.nextPlayerID = 0 
     this.players = []
     this.isGameWaiting = 1
@@ -106,15 +117,41 @@ class Game {
 }
 
 let game = new Game()
-app.ws('/ws', (client, req) => {
 
-    console.log('connect!', game.players.length)
+app.post("/gameCreated", (req, res) => {
+  let gameCode = makeCode()
+
+  while (games[gameCode]) {
+    gameCode = makeCode()
+  }
+
+  games[gameCode] = new Game()
+  games[gameCode].code = gameCode
+
+
+  res.json({gameCode})
+
+}) 
+
+
+app.ws("/join/:gameCode", (client, req) => {
+
+  const {gameCode} = req.params
+  const curGame = games[gameCode]
+
+  if (!curGame) {
+    client.send(JSON.stringify({type: 'error', payload: {message: 'no game'}}));
+    client.close
+    return
+  }
+
+    console.log('connect!', curGame.players.length)
 
     //log new player
-    let newPlayer = new Player(game.nextPlayerID, client);
-    game.players[game.nextPlayerID] = newPlayer
+    let newPlayer = new Player(curGame.nextPlayerID, client);
+    curGame.players[curGame.nextPlayerID] = newPlayer
     client.player = newPlayer
-    game.nextPlayerID++
+    curGame.nextPlayerID++
     client.send(JSON.stringify({type: 'Waiting', payload: {Waiting: true}}));
 
     // when the server receives a new message from this client...
@@ -127,14 +164,14 @@ app.ws('/ws', (client, req) => {
             return;
         }
         const {type, payload} = msg;
-        let opponent = game.getOpponent(client.player)
+        let opponent = curGame.getOpponent(client.player)
 
         //parse based on message type and handle from there
         if (type === "Ready") {
-            game.handleReady(client.player)
+            curGame.handleReady(client.player)
 
             //send signal to begin placing ships if both ready
-            if (!game.isGameWaiting && game.isPlacingShips) {
+            if (!curGame.isGameWaiting && curGame.isPlacingShips) {
                 client.send(JSON.stringify({type: 'StartPlacing', payload: {StartPlacing: true}}));
                 opponent.ws.send(JSON.stringify({type: 'StartPlacing', payload: {StartPlacing: true}}));
             }
@@ -148,26 +185,26 @@ app.ws('/ws', (client, req) => {
                 }
             }
         } else if (type === "Placed") {
-          game.handlePlacement(client.player, payload.Placements)
+          curGame.handlePlacement(client.player, payload.Placements)
 
           //send signal to begin the firing stage if both players have their placements in
-          if (!game.isPlacingShips && game.isFiring) {
+          if (!curGame.isPlacingShips && curGame.isFiring) {
               client.send(JSON.stringify({type: 'Firing', payload: {YourTurn: true}}));
               opponent.ws.send(JSON.stringify({type: 'Firing', payload: {YourTurn: false}}));
           }
         } else if (type === "FiringGuess") {
-          game.handleFiringGuess(client.player, payload.GuessX, payload.GuessY)
+          curGame.handleFiringGuess(client.player, payload.GuessX, payload.GuessY)
 
           //if game is not over, send signal to users to give next guess
-          if(game.isFiring && !game.isEnd) {
+          if(curGame.isFiring && !curGame.isEnd) {
             client.send(JSON.stringify({type: 'Firing', payload: {YourTurn: false}}));
             opponent.ws.send(JSON.stringify({type: 'Firing', payload: {YourTurn: true}}));
           }
 
           //if game is over, send signal to users
-          else if(game.isEnd) {
-            client.send(JSON.stringify({type: 'End', payload: {Winner: game.winner}}));
-            opponent.ws.send(JSON.stringify({type: 'End', payload: {Winner: game.winner}}));
+          else if(curGame.isEnd) {
+            client.send(JSON.stringify({type: 'End', payload: {Winner: curGame.winner}}));
+            opponent.ws.send(JSON.stringify({type: 'End', payload: {Winner: curGame.winner}}));
           }
         }
 
@@ -176,7 +213,7 @@ app.ws('/ws', (client, req) => {
     //on a disconnect....
     client.on("close", () => {
         console.log("Player disconnected:", client.player.id);
-        delete game.players[client.player.id];
+        delete curGame.players[client.player.id];
 
     });
 

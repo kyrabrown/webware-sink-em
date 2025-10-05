@@ -6,6 +6,10 @@ function App() {
   const [placingGridVals, setPlacingGridVals] =  useState(Array.from({ length: 10 }, () => Array(10).fill(null)));
   const [firingGridVals, setFiringGridVals] =  useState(Array.from({ length: 10 }, () => Array(10).fill(null)));
   const [userMessage, setUserMessage] = useState('')
+  const [gameCode, setGameCode] = useState('')
+  const [gameCreated, setGameCreated] = useState(false)
+  const [joiningGame, setJoiningGame] = useState(false)
+  const [joinCode, setJoinCode] = useState('')
   const [isWaitingForReady, setIsWaitingForReady] = useState(true)
   const [isPlacing, setIsPlacing] = useState(false)
   const [isFiring, setIsFiring] = useState(false)
@@ -14,12 +18,16 @@ function App() {
 
   const ws = useRef(null);
 
-  useEffect(() => {
+  const makeNewWS = (code) => {
+    if (ws.current) {
+      ws.current.close()
+    }
 
-    ws.current = new WebSocket("/ws");
+    ws.current = new WebSocket(`ws://${window.location.host}/join/${code}`)
 
     ws.current.onopen = () => {
       console.log("Connected to WS server");
+    }
       
       ws.current.onmessage = async msgSent => {
         let msg;
@@ -77,7 +85,7 @@ function App() {
           setUserMessage(type)
         }
       };
-    };
+    
 
     ws.current.onclose = () => {
       console.log("WebSocket connection closed");
@@ -86,9 +94,9 @@ function App() {
     return () => {
     console.log("Cleaning up WS connection");
     ws.current?.close();
-  };
+  }; 
 
-  }, []);
+    }
 
   const updateSquareChoicePlacing = (x, y) => {
     //update grid
@@ -103,6 +111,25 @@ function App() {
     tempGrid[x][y] = 'X'
     setFiringGridVals(tempGrid)
   };
+
+  const makeGame = async () => {
+    const res = await fetch ("/gameCreated", {method: "POST"})
+    const data = await res.json()
+    setGameCode(data.gameCode)
+    setGameCreated(true)
+    makeNewWS(data.gameCode)
+  }
+
+  const joinGame = async () => {
+    const code = joinCode.trim().toUpperCase();
+    if (!code) {
+      return
+    }
+    setGameCode(code)
+    setJoiningGame(true)
+    setGameCreated(true)
+    makeNewWS(code)
+  }
 
   const sendReadyToStart = () => {
     console.log("sending ready")
@@ -124,8 +151,37 @@ function App() {
   return (
     <div className="App">
       <h1> Sink 'Em</h1>
-      <p>{userMessage}</p>
-      {isWaitingForReady ? <button onClick={sendReadyToStart}> Ready </button> : ''}
+
+      {!gameCreated && !joiningGame && (
+        <div>
+          <button onClick={makeGame}>Create Game</button>
+          <br></br>
+          <br></br>
+          <button onClick={() => setJoiningGame(true)}>Join Existing Game</button>
+        </div>
+      )}
+
+      {joiningGame && !gameCreated && (
+
+        <div>
+          <p>Enter code here:</p>
+          <input type="text" value={joinCode} onChange={(i) => setJoinCode(i.target.value)}/>
+          <br></br>
+          <br></br>
+          <button onClick={joinGame}>Join game</button>
+        </div>
+
+      )}
+
+      {gameCreated && isWaitingForReady && (
+        <div>
+        <p>Your code is: <strong>{gameCode}</strong></p>
+        <button onClick={sendReadyToStart}> Ready </button>
+        </div>
+      )}
+      
+      
+      
       {isPlacing ? 
         (<div> 
             <Grid gridVals={placingGridVals} handleSquareChoice={updateSquareChoicePlacing}></Grid> 
