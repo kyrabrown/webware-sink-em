@@ -186,7 +186,7 @@ app.ws('/ws', async (client, req) => {
                 game.handleReady(client.playerID)
 
                 //send signal to begin placing ships if both ready
-                if (!game.isGameWaiting && game.isPlacingShips) {
+            if (!game.isGameWaiting && game.isPlacingShips) {
                     client.send(JSON.stringify({type: 'StartPlacing', payload: {StartPlacing: true}}));
                     try {
                         sockets[opponent.ws].send(JSON.stringify({
@@ -237,7 +237,7 @@ app.ws('/ws', async (client, req) => {
 
 
                 //if game is not over, send signal to users to give next guess
-                if (game.isFiring && !game.isEnd) {
+          if(game.isFiring && !game.isEnd) {
                     client.send(JSON.stringify({type: 'Firing', payload: {YourTurn: false}}));
                     try {
                         sockets[opponent.ws].send(JSON.stringify({type: 'Firing', payload: {YourTurn: true}}));
