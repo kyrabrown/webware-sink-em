@@ -19,7 +19,7 @@ if (!user || !pass || !url) {
     console.log("Environment variables not set up correctly. Please place .env file with\n" +
         "credentials inside sink-em folder or paste contents into Render environment\n" +
         "variables if deploying (download link is in Slack).")
-    process.exit(-1)
+    process.exit(1)
 }
 const uri = `mongodb+srv://${user}:${pass}@${url}/?retryWrites=true&w=majority&appName=Cluster0`;
 const client = new MongoClient(uri, {
