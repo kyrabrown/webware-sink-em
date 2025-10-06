@@ -202,7 +202,7 @@ function App() {
             {isFiring && !isMyFireTurn ?
                 (<div>
                         <p> Waiting for other user's guess....</p>
-                        <Grid gridVals={placingGridVals} handleSquareChoice={console.log(`Clicked square`)}></Grid>
+                        <Grid gridVals={placingGridVals} handleSquareChoice={() => console.log(`Clicked square`)}></Grid>
                     </div>
                 )
                 : ''}
