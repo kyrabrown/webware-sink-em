@@ -42,6 +42,12 @@ function App() {
                     setUserMessage(type)
                 } else if (type === "Full") {
                     setUserMessage(type)
+                } else if (type === "InvalidCode") {
+                    setUserMessage("Invalid code.")
+                    setGameCode('')
+                    setJoinCode('')
+                    setJoiningGame(false)
+                    setGameCreated(false)
                 } else if (type === "Disconnected") {
                     setUserMessage("Your opponent has disconnected. The game has been reset. Reload to create a new game.")
                 } else if (type === "StartPlacing") {
@@ -154,7 +160,7 @@ function App() {
                     <button onClick={makeGame}>Create Game</button>
                     <br></br>
                     <br></br>
-                    <button onClick={() => setJoiningGame(true)}>Join Existing Game</button>
+                    <button onClick={() => {setJoiningGame(true); setUserMessage('')}}>Join Existing Game</button>
                 </div>
             )}
 
