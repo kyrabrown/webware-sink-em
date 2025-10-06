@@ -10,11 +10,15 @@ function App() {
     const [gameCreated, setGameCreated] = useState(false)
     const [joiningGame, setJoiningGame] = useState(false)
     const [joinCode, setJoinCode] = useState('')
-    const [isWaitingForReady, setIsWaitingForReady] = useState(true)
+    const [isWaitingForReady, setIsWaitingForReady] = useState(false)
     const [isPlacing, setIsPlacing] = useState(false)
     const [isFiring, setIsFiring] = useState(false)
     const [isMyFireTurn, setIsMyFireTurn] = useState(false)
-    const [isGameEnded, setIsGameEnded] = useState(false)
+    const [isGameEnded, setIsGameEnded] = useState(true)
+
+    // track winner
+    const [winner, setWinner] = useState("");
+
 
     const ws = useRef(null);
 
@@ -81,6 +85,7 @@ function App() {
                 } else if (type === "End") {
                     //game has ended, display winner
                     console.log(payload.Winner)
+                    setWinner(payload.Winner)
                     setIsMyFireTurn(false)
                     setIsFiring(false)
                     setIsGameEnded(true)
@@ -151,6 +156,27 @@ function App() {
         ws.current.send(JSON.stringify({type: 'FiringGuess', payload: {GuessX: x, GuessY: y}}));
     }
 
+    const goHome = () => {
+        try { ws.current?.close(); } catch {}
+        ws.current = null;
+
+        // reset states for new game
+        setPlacingGridVals(Array.from({ length: 10 }, () => Array(10).fill(null)));
+        setFiringGridVals(Array.from({ length: 10 }, () => Array(10).fill(null)));
+        setUserMessage("");
+        setGameCode("");
+        setGameCreated(false);
+        setJoiningGame(false);
+        setJoinCode("");
+        setIsWaitingForReady(true);
+        setIsPlacing(false);
+        setIsFiring(false);
+        setIsMyFireTurn(false);
+        setIsGameEnded(false);
+        setWinner("");
+        };
+
+
     return (
         <div className="page">
             <h1 className="text-3xl font-bold tracking-tight mb-6"> Sink 'Em</h1>
@@ -207,7 +233,13 @@ function App() {
                 )
                 : ''}
             {isGameEnded ? (
-                <p> Game has ended</p>) : ''
+                <div className="flex flex-col items-center space-y-4">
+                    <h2 className="text-2xl font-bold">Game Over</h2>
+                    <p className="text-lg">Winner: <strong>{winner}</strong></p>
+                    <p> Game has ended</p>
+                    <button className="btn" onClick={goHome}>Play again!</button>
+                </div>
+            ) : ''
             }
         </div>
     );
