@@ -131,7 +131,14 @@ app.get('/create', async (req, res) => {
 })
 
 app.ws('/ws', async (client, req) => {
-    const objectID = new ObjectId(req.query.id)
+    let objectID;
+    try {
+        objectID = new ObjectId(req.query.id)
+    } catch (e) {
+        client.send(JSON.stringify({type: 'InvalidCode', payload: {InvalidCode: true}}));
+        return;
+    }
+
     let game;
     const retrieveGame = async () => {
         const retrievedGame = await gameData.findOne({
@@ -147,7 +154,13 @@ app.ws('/ws', async (client, req) => {
             retrievedGame.winner
         )
     }
-    await retrieveGame()
+    try {
+        await retrieveGame()
+    } catch (e) {
+        client.send(JSON.stringify({type: 'InvalidCode', payload: {InvalidCode: true}}));
+        return;
+    }
+
 
     const updateGameInMongo = async () => {
         await gameData.replaceOne({_id: objectID}, game)
