@@ -152,55 +152,55 @@ function App() {
     }
 
     return (
-        <div className="App">
-            <h1> Sink 'Em</h1>
+        <div className="page">
+            <h1 className="text-3xl font-bold tracking-tight mb-6"> Sink 'Em</h1>
             {userMessage}
             {!gameCreated && !joiningGame && (
-                <div>
-                    <button onClick={makeGame}>Create Game</button>
+                <div className="flex flex-col items-center space-y-4">
+                    <button className ="btn" onClick={makeGame}>Create Game</button>
                     <br></br>
                     <br></br>
-                    <button onClick={() => {setJoiningGame(true); setUserMessage('')}}>Join Existing Game</button>
+                    <button className ="btn" onClick={() => {setJoiningGame(true); setUserMessage('')}}>Join Existing Game</button>
                 </div>
             )}
 
             {joiningGame && !gameCreated && (
 
-                <div>
+                <div className="flex flex-col items-center space-y-4">
                     <p>Enter code here:</p>
-                    <input type="text" value={joinCode} onChange={(i) => setJoinCode(i.target.value)}/>
+                    <input type="text" value={joinCode} onChange={(i) => setJoinCode(i.target.value)} className="border-2 border-gray-300 rounded-md p-2 text-black bg-white"/>
                     <br></br>
                     <br></br>
-                    <button onClick={joinGame}>Join game</button>
+                    <button className ="btn" onClick={joinGame}>Join game</button>
                 </div>
 
             )}
 
             {gameCreated && isWaitingForReady && (
-                <div>
+                <div className="flex flex-col items-center space-y-4">
                     <p>Your code is: <strong>{gameCode}</strong></p>
-                    <button onClick={sendReadyToStart}> Ready</button>
+                    <button className ="btn" onClick={sendReadyToStart}> Ready</button>
                 </div>
             )}
 
 
             {isPlacing ?
-                (<div>
+                (<div className="flex flex-col items-center space-y-4">
                         <Grid gridVals={placingGridVals} handleSquareChoice={updateSquareChoicePlacing}></Grid>
-                        <button onClick={submitPlacements}> Submit Placements</button>
+                        <button className ="btn" onClick={submitPlacements}> Submit Placements</button>
                     </div>
                 )
                 : ''}
             {isFiring && isMyFireTurn ?
-                (<div>
+                (<div className="flex flex-col items-center space-y-4">
                         <p> Choose a square to fire at....</p>
                         <Grid gridVals={firingGridVals} handleSquareChoice={updateSquareChoiceFiring}></Grid>
-                        <button onClick={submitPlacements}> Submit Fire Location</button>
+                        <button className ="btn" onClick={submitPlacements}> Submit Fire Location</button>
                     </div>
                 )
                 : ''}
             {isFiring && !isMyFireTurn ?
-                (<div>
+                (<div className="flex flex-col items-center space-y-4">
                         <p> Waiting for other user's guess....</p>
                         <Grid gridVals={placingGridVals} handleSquareChoice={() => console.log(`Clicked square`)}></Grid>
                     </div>

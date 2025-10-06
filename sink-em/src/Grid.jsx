@@ -25,7 +25,7 @@ export default function Grid({gridVals, handleSquareChoice}) {
   };
 
   return (
-    <div className="grid">
+    <div className="board-grid">
       {gridVals.map((row, rowIndex) =>
         row.map((value, colIndex) => (
           <GridSquare
