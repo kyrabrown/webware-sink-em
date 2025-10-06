@@ -12,6 +12,7 @@ import {MongoClient, ObjectId, ServerApiVersion} from 'mongodb'
 import dotenv from 'dotenv'
 
 dotenv.config({quiet: true})
+const port = 3000
 const user = process.env.DB_USER
 const pass = process.env.DB_PASSWORD
 const url = process.env.DB_URL
@@ -306,4 +307,9 @@ app.ws('/ws', async (client, req) => {
 })
 
 
-ViteExpress.listen(app, 3000, () => console.log("Server is listening..."));
+ViteExpress.listen(app, port, () => {
+    console.log("Server is listening on port " + port)
+    if (process.env.NODE_ENV !== "production") {
+        console.log("Access at http://localhost:" + port)
+    }
+});
