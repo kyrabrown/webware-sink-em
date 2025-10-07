@@ -108,6 +108,7 @@ class Game {
         if (opponent.personalBoard[x][y] === 'S') {
             //guess was a hit
             this.players[playerID].guessesBoard[x][y] = 'H'
+            opponent.personalBoard[x][y] = 'H'
         } else {
             //guess was a miss
             this.players[playerID].guessesBoard[x][y] = 'M'
@@ -238,9 +239,11 @@ app.ws('/ws', async (client, req) => {
                 //send signal to begin the firing stage if both players have their placements in
                 if (!game.isPlacingShips && game.isFiring) {
                     await updateGameInMongo()
-                    client.send(JSON.stringify({type: 'Firing', payload: {YourTurn: true}}));
+                    client.send(JSON.stringify({type: 'Firing', payload: {YourTurn: true, 
+                        placingGrid:  game.players[client.playerID].personalBoard, guessGrid: game.players[client.playerID].guessesBoard, Result: "None"}}));
                     try {
-                        sockets[opponent.ws].send(JSON.stringify({type: 'Firing', payload: {YourTurn: false}}));
+                        sockets[opponent.ws].send(JSON.stringify({type: 'Firing', payload: {YourTurn: false,
+                            placingGrid: opponent.personalBoard, guessGrid: opponent.guessesBoard, Result: "None"}}));
                     } catch (e) {
                         console.error("Client disconnected during a game")
                         await resetGame()
@@ -249,35 +252,36 @@ app.ws('/ws', async (client, req) => {
                 }
             } else if (type === "FiringGuess") {
                 try {
-
-                  const hit = opponent.personalBoard[payload.GuessX][payload.GuessY] === 'S'
+                    const hit = opponent.personalBoard[payload.GuessX][payload.GuessY] === 'S'
 
                     game.handleFiringGuess(client.playerID, payload.GuessX, payload.GuessY)
                     await updateGameInMongo()
 
                     //if game is not over, send signal to users to give next guess
-                  if (game.isFiring && !game.isEnd) {
-                      client.send(JSON.stringify({type: 'Firing', payload: {YourTurn: false, Result: hit ? 'H' : 'M', X: payload.GuessX, Y: payload.GuessY}}));
-                      try {
-                          sockets[opponent.ws].send(JSON.stringify({type: 'Firing', payload: {YourTurn: true}}));
-                      } catch (e) {
-                          console.error("Client disconnected during a game")
-                          await resetGame()
-                      }
+                    if (game.isFiring && !game.isEnd) {
+                        client.send(JSON.stringify({type: 'Firing', payload: {YourTurn: false, 
+                            placingGrid:  game.players[client.playerID].personalBoard, guessGrid: game.players[client.playerID].guessesBoard, Result: hit ? 'H' : 'M'}}));
+                        try {
+                            sockets[opponent.ws].send(JSON.stringify({type: 'Firing', payload: {YourTurn: true, 
+                                placingGrid: opponent.personalBoard, guessGrid: opponent.guessesBoard, Result: hit ? 'H' : 'M'}}));
+                        } catch (e) {
+                            console.error("Client disconnected during a game")
+                            await resetGame()
+                        }
 
-                  }
+                    }
 
-                  //if game is over, send signal to users
-                  else if (game.isEnd) {
-                      client.send(JSON.stringify({type: 'End', payload: {Winner: game.winner}}));
-                      try {
-                          sockets[opponent.ws].send(JSON.stringify({type: 'End', payload: {Winner: game.winner}}));
-                      } catch (e) {
-                          console.error("Client disconnected during a game")
-                          await resetGame()
-                      }
+                    //if game is over, send signal to users
+                    else if (game.isEnd) {
+                        client.send(JSON.stringify({type: 'End', payload: {Winner: game.winner}}));
+                        try {
+                            sockets[opponent.ws].send(JSON.stringify({type: 'End', payload: {Winner: game.winner}}));
+                        } catch (e) {
+                            console.error("Client disconnected during a game")
+                            await resetGame()
+                        }
 
-                  }
+                    }
                 } catch (e) {
                     console.log("Client disconnected during a game")
                     await resetGame()

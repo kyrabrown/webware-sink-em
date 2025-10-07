@@ -60,30 +60,36 @@ function App() {
                 } else if (type === "Firing") {
                     setUserMessage(type + payload.YourTurn)
 
+                    //update boards
+                    setFiringGridVals(payload.guessGrid)
+                    setPlacingGridVals(payload.placingGrid)
+
                     //start the firing stage of the game!
                     setIsPlacing(false)
                     setIsFiring(true)
 
-                    if (payload.Result === 'H' || payload.Result === 'M') {
-                      setFiringGridVals(oldGrid => {
-                        const updateGrid = oldGrid.map(row => [...row])
-                      updateGrid[payload.X][payload.Y] = payload.Result
-                      return updateGrid
-                      })
-                    }
-
                     //check if current player's turn
                     if (payload.YourTurn) {
+                        //upon receiving the opponent's hit/miss update, show your personal board 
+                        //for 5 seconds before moving to showing your firing board 
+
                         //do firing functionality to get user's guess square coordinates
-                        setIsMyFireTurn(true)      
-                        
-                        startTimer()
+                        setTimeout(() => {
+                            setIsMyFireTurn(true)      
+                            startTimer()
+                        }, 5000)
 
                         //after firing has completed, send coordinates of square back to the server
                     } else {
-                        //wait on other user to fire
-                        setIsMyFireTurn(false)
+                        //upon receiving the your previous shot's hit/miss update, show your guess board 
+                        //for 5 seconds before moving to showing your personal board
+                        
+                        setTimeout(() => {
+                            //wait on other user to fire
+                            setIsMyFireTurn(false)
+                        }, 5000)
                     }
+
                 } else if (type === "End") {
                     //game has ended, display winner
                     console.log(payload.Winner)
@@ -115,7 +121,7 @@ function App() {
     };
 
     const updateSquareChoiceFiring = (x, y) => {
-              if (!isMyFireTurn) {
+        if (!isMyFireTurn) {
           return
         }
 
