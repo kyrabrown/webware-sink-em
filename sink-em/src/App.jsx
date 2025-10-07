@@ -72,11 +72,6 @@ function App() {
                         startTimer()
 
                         //after firing has completed, send coordinates of square back to the server
-
-                        let x = 5
-                        let y = 5 //dummy values for now
-                        sendFiringSquare(x, y)
-                        setIsMyFireTurn(false)
                     } else {
                         //wait on other user to fire
                         setIsMyFireTurn(false)
@@ -112,10 +107,15 @@ function App() {
     };
 
     const updateSquareChoiceFiring = (x, y) => {
+              if (!isMyFireTurn) {
+          return
+        }
+
         //update grid
         const tempGrid = firingGridVals.map(row => [...row]);
         tempGrid[x][y] = 'X'
         setFiringGridVals(tempGrid)
+        sendFiringSquare(x,y)
     };
 
     const makeGame = async () => {
