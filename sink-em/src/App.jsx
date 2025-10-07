@@ -14,6 +14,7 @@ function App() {
     const [isPlacing, setIsPlacing] = useState(false)
     const [isFiring, setIsFiring] = useState(false)
     const [isMyFireTurn, setIsMyFireTurn] = useState(false)
+    const [timer, setTimer] = useState(30)
     const [isGameEnded, setIsGameEnded] = useState(false)
 
     const ws = useRef(null);
@@ -66,7 +67,9 @@ function App() {
                     //check if current player's turn
                     if (payload.YourTurn) {
                         //do firing functionality to get user's guess square coordinates
-                        setIsMyFireTurn(true)
+                        setIsMyFireTurn(true)      
+                        
+                        startTimer()
 
                         //after firing has completed, send coordinates of square back to the server
 
@@ -149,6 +152,19 @@ function App() {
     const sendFiringSquare = (x, y) => {
         console.log("sending firing guess square:", x, y)
         ws.current.send(JSON.stringify({type: 'FiringGuess', payload: {GuessX: x, GuessY: y}}));
+    }
+
+    function startTimer () {
+      setTimer(30)
+        const interval = setInterval(() => {
+          setTimer((t) => {
+            if (t === 0) {
+              clearInterval(interval)
+              setIsMyFireTurn(false)
+            }
+            return t - 1
+          })
+        }, 1000)
     }
 
     return (
