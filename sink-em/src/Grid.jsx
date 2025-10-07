@@ -25,18 +25,20 @@ export default function Grid({gridVals, handleSquareChoice}) {
   };
 
   return (
-    <div className="grid">
-      {gridVals.map((row, rowIndex) =>
-        row.map((value, colIndex) => (
-          <GridSquare
-            key={`${rowIndex}-${colIndex}`}
-            row={rowIndex}
-            col={colIndex}
-            value={value}
-            onClick={handleClick}
-          />
-        ))
-      )}
-    </div>
+    // <div className="card">
+      <div className="board-grid">
+        {gridVals.map((row, rowIndex) =>
+          row.map((value, colIndex) => (
+            <GridSquare
+              key={`${rowIndex}-${colIndex}`}
+              row={rowIndex}
+              col={colIndex}
+              value={value}
+              onClick={handleClick}
+            />
+          ))
+        )}
+      </div>
+    // </div>
   );
 }
