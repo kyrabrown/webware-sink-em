@@ -1,7 +1,7 @@
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@500&display=swap');
 @import "tailwindcss";
 @import "tailwindcss/preflight.css" layer(base);
 
-@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@500&display=swap');
 :root { font-family: 'Quicksand', sans-serif; }
 
 /* :root {
