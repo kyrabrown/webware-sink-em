@@ -1,6 +1,7 @@
 import {useRef, useState} from "react";
 import "./App.css";
 import Grid from "./Grid.jsx";
+import BoardWithAxes from "./axis.jsx"
 
 function App() {
     const [placingGridVals, setPlacingGridVals] = useState(Array.from({length: 10}, () => Array(10).fill(null)));
@@ -16,6 +17,10 @@ function App() {
     const [isMyFireTurn, setIsMyFireTurn] = useState(false)
     const [timer, setTimer] = useState(30)
     const [isGameEnded, setIsGameEnded] = useState(false)
+
+    // track winner
+    const [winner, setWinner] = useState("");
+
 
     const ws = useRef(null);
 
@@ -106,7 +111,7 @@ function App() {
                 } else if (type === "End") {
                     //game has ended, display winner
                     console.log(payload.Winner)
-                    setUserMessage("Game over.")
+                    setWinner(payload.Winner)
                     setIsMyFireTurn(false)
                     setIsFiring(false)
                     setIsGameEnded(true)
@@ -179,6 +184,27 @@ function App() {
         ws.current.send(JSON.stringify({type: 'FiringGuess', payload: {GuessX: x, GuessY: y}}));
     }
 
+    const goHome = () => {
+        try { ws.current?.close(); } catch {}
+        ws.current = null;
+
+        // reset states for new game
+        setPlacingGridVals(Array.from({ length: 10 }, () => Array(10).fill(null)));
+        setFiringGridVals(Array.from({ length: 10 }, () => Array(10).fill(null)));
+        setUserMessage("");
+        setGameCode("");
+        setGameCreated(false);
+        setJoiningGame(false);
+        setJoinCode("");
+        setIsWaitingForReady(true);
+        setIsPlacing(false);
+        setIsFiring(false);
+        setIsMyFireTurn(false);
+        setIsGameEnded(false);
+        setWinner("");
+        };
+
+
     function startTimer () {
       setTimer(30)
         const interval = setInterval(() => {
@@ -193,61 +219,92 @@ function App() {
     }
 
     return (
-        <div className="App">
-            <h1> Sink 'Em</h1>
+        <div className="page">
+            <h1 className="h1"> Sink 'Em</h1>
             {userMessage}
             {!gameCreated && !joiningGame && (
-                <div>
-                    <button onClick={makeGame}>Create Game</button>
+                <div className="flex flex-col items-center space-y-4">
+                    <button className ="btn" onClick={makeGame}>Create Game</button>
                     <br></br>
                     <br></br>
-                    <button onClick={() => {setJoiningGame(true); setUserMessage('')}}>Join Existing Game</button>
+                    <button className ="btn" onClick={() => {setJoiningGame(true); setUserMessage('')}}>Join Existing Game</button>
                 </div>
             )}
 
             {joiningGame && !gameCreated && (
 
-                <div>
+                <div className="flex flex-col items-center space-y-4">
                     <p>Enter code here:</p>
-                    <input type="text" value={joinCode} onChange={(i) => setJoinCode(i.target.value)}/>
+                    <input type="text" value={joinCode} onChange={(i) => setJoinCode(i.target.value)} className="border-2 border-gray-300 rounded-md p-2 text-black bg-white"/>
                     <br></br>
                     <br></br>
-                    <button onClick={joinGame}>Join game</button>
+                    <button className ="btn" onClick={joinGame}>Join game</button>
                 </div>
-
             )}
 
             {gameCreated && isWaitingForReady && (
-                <div>
-                    <p>Your code is: <strong>{gameCode}</strong></p>
-                    <button onClick={sendReadyToStart}> Ready</button>
+                <div className="flex flex-col items-center space-y-4">
+                    <div className="code">
+                        <p>Your code is: <strong>{gameCode}</strong></p> 
+                        {/* copy to clipbaord button  */}
+                        <button
+                            type="button"
+                            onClick={async () => {
+                                await navigator.clipboard.writeText(gameCode);   // ← copy!
+                            }} className="btn-copy"> 
+                            {/* Clipboard icon */}
+                            <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="w-4 h-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                            >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"
+                            />
+                            <rect width="8" height="4" x="8" y="2" rx="1" ry="1" />
+                            </svg>
+                        </button>
+                    </div>
+                    <button className ="btn" onClick={sendReadyToStart}> Ready</button>
                 </div>
+                
             )}
-
-
             {isPlacing ?
-                (<div>
+                (<div className="flex flex-col items-center space-y-4">
+                    <BoardWithAxes>
                         <Grid gridVals={placingGridVals} handleSquareChoice={updateSquareChoicePlacing}></Grid>
-                        <button onClick={submitPlacements}> Submit Placements</button>
+                    </BoardWithAxes>
+                        <button className ="btn" onClick={submitPlacements}> Submit Placements</button>
                     </div>
                 )
                 : ''}
             {isFiring && isMyFireTurn ?
-                (<div>
+                (<div className="flex flex-col items-center space-y-4">
                         <p>Time remaining: {timer} </p>
                         <Grid gridVals={firingGridVals} handleSquareChoice={updateSquareChoiceFiring}></Grid>
-                        <button onClick={submitPlacements}> Submit Fire Location</button>
+                        <button className ="btn" onClick={submitPlacements}> Submit Fire Location</button>
                     </div>
                 )
                 : ''}
             {isFiring && !isMyFireTurn ?
-                (<div>
+                (<div className="flex flex-col items-center space-y-4">
                         <Grid gridVals={placingGridVals} handleSquareChoice={() => console.log(`Clicked square`)}></Grid>
                     </div>
                 )
                 : ''}
             {isGameEnded ? (
-                <p> Game has ended</p>) : ''
+                <div className="flex flex-col items-center space-y-4">
+                    <h2 className="text-2xl font-bold">Game Over</h2>
+                    <p className="text-lg">Winner: <strong>{winner}</strong></p>
+                    <p> Game has ended</p>
+                    <button className="btn" onClick={goHome}>Play again!</button>
+                </div>
+            ) : ''
             }
         </div>
     );
