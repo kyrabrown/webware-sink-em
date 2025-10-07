@@ -1,6 +1,7 @@
 import {useRef, useState} from "react";
 import "./App.css";
 import Grid from "./Grid.jsx";
+import { generateUsername } from "unique-username-generator";
 
 function App() {
     const [placingGridVals, setPlacingGridVals] = useState(Array.from({length: 10}, () => Array(10).fill(null)));
@@ -16,6 +17,10 @@ function App() {
     const [isMyFireTurn, setIsMyFireTurn] = useState(false)
     const [timer, setTimer] = useState(30)
     const [isGameEnded, setIsGameEnded] = useState(false)
+    let usernameComponents = generateUsername("-").split("-")
+    usernameComponents = usernameComponents.map((component) => component.charAt(0).toUpperCase() + component.slice(1))
+    const [displayName, setDisplayName] = useState(usernameComponents[0] + usernameComponents[1])
+    const [opponentDisplayName, setOpponentDisplayName] = useState("Opponent")
 
     const ws = useRef(null);
 
@@ -53,7 +58,7 @@ function App() {
                     setUserMessage("Your opponent has disconnected. The game has been reset. Reload to create a new game.")
                 } else if (type === "StartPlacing") {
                     setUserMessage(type)
-
+                    setOpponentDisplayName(payload.OpponentDisplayName)
                     //change game state
                     setIsWaitingForReady(false)
                     setIsPlacing(true)
@@ -87,6 +92,7 @@ function App() {
                 } else if (type === "End") {
                     //game has ended, display winner
                     console.log(payload.Winner)
+                    setUserMessage("Winner: " + payload.Winner)
                     setIsMyFireTurn(false)
                     setIsFiring(false)
                     setIsGameEnded(true)
@@ -143,8 +149,12 @@ function App() {
     }
 
     const sendReadyToStart = () => {
-        console.log("sending ready")
-        ws.current.send(JSON.stringify({type: 'Ready', payload: {Ready: true}}));
+        if (displayName.length > 0){
+            console.log("sending ready")
+            ws.current.send(JSON.stringify({type: 'Ready', payload: {Ready: true, DisplayName: displayName}}));
+        } else {
+            alert("You must choose a display name!")
+        }
     }
 
     const submitPlacements = () => {
@@ -200,13 +210,19 @@ function App() {
             {gameCreated && isWaitingForReady && (
                 <div>
                     <p>Your code is: <strong>{gameCode}</strong></p>
+                    <p>Choose a display name:</p>
+                    <input type="text" value={displayName} onChange={(i) => setDisplayName(i.target.value)}/>
                     <button onClick={sendReadyToStart}> Ready</button>
                 </div>
             )}
 
 
+
             {isPlacing ?
-                (<div>
+                (
+                    <div>
+                        <p>You are: {displayName}</p>
+                        <p>You're up against: {opponentDisplayName}</p>
                         <Grid gridVals={placingGridVals} handleSquareChoice={updateSquareChoicePlacing}></Grid>
                         <button onClick={submitPlacements}> Submit Placements</button>
                     </div>
@@ -223,7 +239,7 @@ function App() {
                 : ''}
             {isFiring && !isMyFireTurn ?
                 (<div>
-                        <p> Waiting for other user's guess....</p>
+                        <p> {opponentDisplayName} is guessing...</p>
                         <Grid gridVals={placingGridVals} handleSquareChoice={() => console.log(`Clicked square`)}></Grid>
                     </div>
                 )

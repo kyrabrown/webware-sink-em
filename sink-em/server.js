@@ -37,7 +37,7 @@ let sockets = {}
 class Player {
     constructor(id, ws) {
         this.id = id
-        this.displayName = "Guest"
+        this.displayName = "Player " + id
         this.isReady = false
         this.ws = ws
         this.hasPlaced = false
@@ -79,8 +79,9 @@ class Game {
         return true; // all hits match with ships
     }
 
-    handleReady(playerID) {
+    handleReady(playerID, displayName) {
         this.players[playerID].isReady = true
+        this.players[playerID].displayName = displayName
 
         //check if both are ready, if so, begin!
         if (Object.keys(this.players).length === 2 && this.players[0].isReady && this.players[1].isReady) {
@@ -118,7 +119,7 @@ class Game {
             //if a winner, change game flags
             this.isFiring = 0
             this.isEnd = 1
-            this.winner = playerID //change to display name later
+            this.winner = this.players[playerID].displayName
         }
     }
 }
@@ -204,15 +205,15 @@ app.ws('/ws', async (client, req) => {
 
             //parse based on message type and handle from there
             if (type === "Ready") {
-                game.handleReady(client.playerID)
+                game.handleReady(client.playerID, payload.DisplayName)
 
                 //send signal to begin placing ships if both ready
                 if (!game.isGameWaiting && game.isPlacingShips) {
-                    client.send(JSON.stringify({type: 'StartPlacing', payload: {StartPlacing: true}}));
+                    client.send(JSON.stringify({type: 'StartPlacing', payload: {StartPlacing: true, OpponentDisplayName: opponent.displayName}}));
                     try {
                         sockets[opponent.ws].send(JSON.stringify({
                             type: 'StartPlacing',
-                            payload: {StartPlacing: true}
+                            payload: {StartPlacing: true, OpponentDisplayName: game.players[client.playerID].displayName}
                         }));
                     } catch (e) {
                         console.error("Client disconnected during a game")
