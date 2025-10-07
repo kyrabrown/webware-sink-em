@@ -215,6 +215,7 @@ function App() {
             {isFiring && isMyFireTurn ?
                 (<div>
                         <p> Choose a square to fire at....</p>
+                        <p>Time remaining: {timer} </p>
                         <Grid gridVals={firingGridVals} handleSquareChoice={updateSquareChoiceFiring}></Grid>
                         <button onClick={submitPlacements}> Submit Fire Location</button>
                     </div>
