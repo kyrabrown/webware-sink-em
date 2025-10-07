@@ -1,7 +1,7 @@
 import {useRef, useState} from "react";
 import "./App.css";
 import Grid from "./Grid.jsx";
-import { generateUsername } from "unique-username-generator";
+import {adjectives, nouns, uniqueUsernameGenerator} from "unique-username-generator";
 
 function App() {
     const [placingGridVals, setPlacingGridVals] = useState(Array.from({length: 10}, () => Array(10).fill(null)));
@@ -17,9 +17,8 @@ function App() {
     const [isMyFireTurn, setIsMyFireTurn] = useState(false)
     const [timer, setTimer] = useState(30)
     const [isGameEnded, setIsGameEnded] = useState(false)
-    let usernameComponents = generateUsername("-").split("-")
-    usernameComponents = usernameComponents.map((component) => component.charAt(0).toUpperCase() + component.slice(1))
-    const [displayName, setDisplayName] = useState(usernameComponents[0] + usernameComponents[1])
+    let username = uniqueUsernameGenerator({ dictionaries: [adjectives, nouns], separator: "", style: 'titleCase', randomDigits: 0 })
+    const [displayName, setDisplayName] = useState(username)
     const [opponentDisplayName, setOpponentDisplayName] = useState("Opponent")
 
     const ws = useRef(null);
