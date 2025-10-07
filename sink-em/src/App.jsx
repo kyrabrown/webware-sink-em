@@ -1,7 +1,7 @@
 import {useRef, useState} from "react";
 import "./App.css";
 import Grid from "./Grid.jsx";
-import {adjectives, nouns, uniqueUsernameGenerator} from "unique-username-generator";
+import {uniqueUsernameGenerator} from "unique-username-generator";
 
 function App() {
     const [placingGridVals, setPlacingGridVals] = useState(Array.from({length: 10}, () => Array(10).fill(null)));
@@ -17,7 +17,9 @@ function App() {
     const [isMyFireTurn, setIsMyFireTurn] = useState(false)
     const [timer, setTimer] = useState(30)
     const [isGameEnded, setIsGameEnded] = useState(false)
-    let username = uniqueUsernameGenerator({ dictionaries: [adjectives, nouns], separator: "", style: 'titleCase', randomDigits: 0 })
+    const adj = ["frosty", "regal", "flustered", "fiery", "dapper", "zesty", "vibrant", "sneaky", "breezy", "grumpy", "bright", "charmed", "bashful", "eager", "weepy", "jovial", "active", "agile", "awkward", "quick", "slow", "fast", "speedy", "unhurried", "swift", "rapid", "deliberate", "aggressive", "wild", "tame", "docile", "harmless", "dangerous", "loud", "bold", "calm", "kind", "tough", "quiet", "urban", "funny", "rural", "messy", "goofy", "rowdy", "sad", "mad", "pro", "shy", "sly", "happy", "smart", "busy", "glad", "mean", "wise", "rude", "civil", "angry", "tired", "proud", "harsh", "upset", "loyal", "vocal", "brave", "alert", "bored", "naive", "weary", "merry", "dizzy", "witty", "moody", "timid", "jolly", "sassy", "picky", "irate", "social", "honest", "modest", "hungry", "scared", "gifted", "gentle", "decent", "casual", "strict", "brutal", "fierce", "clever", "mature", "loving", "polite", "lively", "amazed", "humble", "mighty", "heroic", "poetic", "tricky", "sleepy", "wicked", "ragged", "amused", "clumsy", "caring", "daring", "upbeat", "gloomy", "quirky", "frigid", "raging", "wanted", "unruly", "feeble", "dreamy", "sullen", "expert", "cranky", "nimble", "fickle", "frugal", "drowsy", "serious", "popular", "healthy", "careful", "violent", "leading", "nervous", "capable", "unknown", "helpful", "curious", "worried", "ethical", "excited", "patient", "wealthy", "dynamic", "content", "anxious", "elegant", "logical", "unhappy", "skilled", "hopeful", "devoted", "notable", "furious", "passive", "ashamed", "foolish", "relaxed", "jealous", "smiling", "fearful", "vicious", "puzzled", "sincere", "cynical", "frantic", "annoyed", "playful", "stylish", "stunned", "defiant", "runaway", "robotic", "trusted", "focused", "erratic", "worldly", "unnamed", "pitiful", "naughty", "cunning", "unlucky", "alarmed", "likable", "comical", "lovable", "envious", "zealous", "valiant", "tearful", "enraged", "aimless", "tactful", "positive", "powerful", "negative", "creative", "innocent", "friendly", "detailed", "artistic", "peaceful", "grateful", "generous", "talented", "tropical", "charming", "cautious", "confused", "sleeping", "credible", "sensible", "vigorous", "decisive", "obsessed", "imminent", "outraged", "affluent", "cheerful", "renowned", "graceful", "restless", "worrying", "stubborn", "thankful", "gracious", "outgoing", "ruthless", "reserved", "startled", "hesitant", "humorous", "eloquent", "aspiring", "fearless", "skillful", "nameless", "carefree", "diligent", "laughing", "lonesome", "selfless", "concerned", "emotional", "surprised", "technical", "confident", "brilliant", "skeptical", "respected", "dedicated", "energetic", "civilized", "impatient", "exhausted", "terrified", "talkative", "unfair", "shocked", "unaware", "seasick", "jubilant", "sheepish", "dejected", "likeable", "frazzled", "effective", "sensitive", "anonymous", "competent", "fictional", "qualified", "scholarly", "unwilling", "committed", "delighted", "suspected", "honorable", "executive", "eccentric", "visionary", "listening", "attentive", "traveling", "motivated", "proactive", "hilarious", "nostalgic", "admirable", "dignified", "forgiving", "welcoming", "righteous", "insistent", "assertive", "ferocious", "deserving", "acclaimed", "impartial", "secretive", "exuberant", "heartfelt", "sarcastic", "leisurely", "nocturnal", "agreeable", "indignant", "tenacious", "courteous", "easygoing", "irritated", "observant", "wandering", "merciless", "perplexed", "overjoyed", "contented", "unselfish", "forgetful", "immune", "mortal", "serene", "cheesy", "olympic", "pleased", "neutral", "adverse", "ominous", "festive", "ghostly", "adamant", "budding", "knowing", "glaring", "resting", "nagging", "honored", "mocking", "wishful", "wayward", "howling", "forlorn", "fleeing", "amiable", "lenient", "sketchy", "jittery", "dashing", "dutiful", "gleeful", "baffled", "admired", "thrifty", "untamed", "suspect", "bookish", "lurking", "cloaked", "involved", "academic", "dramatic", "unlikely", "handsome", "prepared", "rigorous", "animated", "coherent", "informed", "gleaming", "inspired", "tolerant", "discrete", "eclectic", "engaging", "honorary", "tutoring", "relieved", "discreet", "truthful", "vigilant", "literate", "virtuous", "watchful", "appalled", "marching", "tranquil", "charging", "brooding", "fearsome", "trusting", "tireless", "resolute", "exacting", "cultured", "rambling", "amenable", "unbiased", "dogmatic", "ordained", "olympian", "thrilled", "dismayed", "merciful", "blissful", "vengeful", "laudable", "skittish", "sociable", "vehement", "crawling", "stealthy", "downcast", "scornful", "reverent", "amicable", "princely", "pampered", "cheering", "fatigued", "juggling"]
+    const animal = ["alligator", "alpaca", "anteater", "antelope", "armadillo", "baboon", "badger", "bat", "bear", "beaver", "bird", "bison", "boa", "boar", "buffalo", "butterfly", "camel", "cat", "cheetah", "chimpanzee", "chipmunk", "cobra", "cow", "coyote", "crab", "crane", "crocodile", "crow", "deer", "dog", "dolphin", "dove", "dragonfly", "duck", "eagle", "elephant", "elk", "emu", "falcon", "ferret", "fish", "flamingo", "flicker", "fox", "gazelle", "gecko", "giraffe", "goat", "goose", "gorilla", "grizzly", "groundhog", "hawk", "hedgehog", "hen", "hippopotamus", "hyena", "iguana", "insect", "jackal", "jaguar", "kangaroo", "koala", "lemur", "leopard", "lion", "lizard", "llama", "lynx", "magpie", "manatee", "mockingbird", "mongoose", "monkey", "moose", "mouse", "orca", "ostrich", "otter", "owl", "ox", "peacock", "pelican", "penguin", "pigeon", "platypus", "porcupine", "possum", "puma", "python", "rabbit", "raccoon", "rat", "rattlesnake", "rhinoceros", "salmon", "seal", "shark", "sheep", "skunk", "sloth", "snake", "sparrow", "spider", "squirrel", "starfish", "swan", "tarantula", "tiger", "tortoise", "turkey", "turtle", "viper", "vulture", "whale", "wolf", "wombat", "woodpecker", "yak", "zebra"]
+    let username = uniqueUsernameGenerator({ dictionaries: [adj, animal], separator: "", style: 'titleCase', randomDigits: 0, length: 500 })
     const [displayName, setDisplayName] = useState(username)
     const [opponentDisplayName, setOpponentDisplayName] = useState("Opponent")
 
@@ -79,8 +81,8 @@ function App() {
                     //check if current player's turn
                     if (payload.YourTurn) {
                         //do firing functionality to get user's guess square coordinates
-                        setIsMyFireTurn(true)      
-                        
+                        setIsMyFireTurn(true)
+
                         startTimer()
 
                         //after firing has completed, send coordinates of square back to the server
@@ -210,7 +212,9 @@ function App() {
                 <div>
                     <p>Your code is: <strong>{gameCode}</strong></p>
                     <p>Choose a display name:</p>
-                    <input type="text" value={displayName} onChange={(i) => setDisplayName(i.target.value)}/>
+                    <div>
+                        <input type="text" value={displayName} onChange={(i) => setDisplayName(i.target.value)}/>
+                    </div>
                     <button onClick={sendReadyToStart}> Ready</button>
                 </div>
             )}
