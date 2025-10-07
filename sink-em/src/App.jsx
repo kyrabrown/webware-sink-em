@@ -180,7 +180,7 @@ function App() {
 
     return (
         <div className="page">
-            <h1 className="text-3xl font-bold tracking-tight mb-6"> Sink 'Em</h1>
+            <h1 className="h1"> Sink 'Em</h1>
             {userMessage}
             {!gameCreated && !joiningGame && (
                 <div className="flex flex-col items-center space-y-4">
@@ -204,7 +204,7 @@ function App() {
 
             {gameCreated && isWaitingForReady && (
                 <div className="flex flex-col items-center space-y-4">
-                    <div className="flex items-center gap-3">
+                    <div className="code">
                         <p>Your code is: <strong>{gameCode}</strong></p> 
                         {/* copy to clipbaord button  */}
                         <button
