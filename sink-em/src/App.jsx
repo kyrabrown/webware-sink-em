@@ -1,6 +1,7 @@
 import {useRef, useState} from "react";
 import "./App.css";
 import Grid from "./Grid.jsx";
+import BoardWithAxes from "./axis.jsx"
 
 function App() {
     const [placingGridVals, setPlacingGridVals] = useState(Array.from({length: 10}, () => Array(10).fill(null)));
@@ -10,11 +11,11 @@ function App() {
     const [gameCreated, setGameCreated] = useState(false)
     const [joiningGame, setJoiningGame] = useState(false)
     const [joinCode, setJoinCode] = useState('')
-    const [isWaitingForReady, setIsWaitingForReady] = useState(false)
+    const [isWaitingForReady, setIsWaitingForReady] = useState(true)
     const [isPlacing, setIsPlacing] = useState(false)
     const [isFiring, setIsFiring] = useState(false)
     const [isMyFireTurn, setIsMyFireTurn] = useState(false)
-    const [isGameEnded, setIsGameEnded] = useState(true)
+    const [isGameEnded, setIsGameEnded] = useState(false)
 
     // track winner
     const [winner, setWinner] = useState("");
@@ -199,20 +200,45 @@ function App() {
                     <br></br>
                     <button className ="btn" onClick={joinGame}>Join game</button>
                 </div>
-
             )}
 
             {gameCreated && isWaitingForReady && (
                 <div className="flex flex-col items-center space-y-4">
-                    <p>Your code is: <strong>{gameCode}</strong></p>
+                    <div className="flex items-center gap-3">
+                        <p>Your code is: <strong>{gameCode}</strong></p> 
+                        {/* copy to clipbaord button  */}
+                        <button
+                            type="button"
+                            onClick={async () => {
+                                await navigator.clipboard.writeText(gameCode);   // ← copy!
+                            }} className="btn-copy"> 
+                            {/* Clipboard icon */}
+                            <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="w-4 h-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                            >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"
+                            />
+                            <rect width="8" height="4" x="8" y="2" rx="1" ry="1" />
+                            </svg>
+                        </button>
+                    </div>
                     <button className ="btn" onClick={sendReadyToStart}> Ready</button>
                 </div>
+                
             )}
-
-
             {isPlacing ?
                 (<div className="flex flex-col items-center space-y-4">
+                    <BoardWithAxes>
                         <Grid gridVals={placingGridVals} handleSquareChoice={updateSquareChoicePlacing}></Grid>
+                    </BoardWithAxes>
                         <button className ="btn" onClick={submitPlacements}> Submit Placements</button>
                     </div>
                 )
