@@ -58,7 +58,6 @@ function App() {
                     setIsWaitingForReady(false)
                     setIsPlacing(true)
                 } else if (type === "Firing") {
-                    setUserMessage(type + payload.YourTurn)
 
                     //update boards
                     setFiringGridVals(payload.guessGrid)
@@ -72,9 +71,16 @@ function App() {
                     if (payload.YourTurn) {
                         //upon receiving the opponent's hit/miss update, show your personal board 
                         //for 5 seconds before moving to showing your firing board 
+                        if(payload.Result === 'H') {
+                            setUserMessage("Your opponent hit your ship!")
+                        }
+                        else if(payload.Result === 'M') {
+                            setUserMessage("Your opponent missed!")
+                        }
 
                         //do firing functionality to get user's guess square coordinates
                         setTimeout(() => {
+                            setUserMessage("It is your turn to fire. You have 30 seconds.")
                             setIsMyFireTurn(true)      
                             startTimer()
                         }, 5000)
@@ -83,9 +89,16 @@ function App() {
                     } else {
                         //upon receiving the your previous shot's hit/miss update, show your guess board 
                         //for 5 seconds before moving to showing your personal board
-                        
+                        if(payload.Result === 'H') {
+                            setUserMessage("You hit a ship!")
+                        }
+                        else if(payload.Result === 'M') {
+                            setUserMessage("You missed!")
+                        }
+
                         setTimeout(() => {
                             //wait on other user to fire
+                            setUserMessage("Waiting for the opponent to fire")
                             setIsMyFireTurn(false)
                         }, 5000)
                     }
@@ -93,6 +106,7 @@ function App() {
                 } else if (type === "End") {
                     //game has ended, display winner
                     console.log(payload.Winner)
+                    setUserMessage("Game over.")
                     setIsMyFireTurn(false)
                     setIsFiring(false)
                     setIsGameEnded(true)
@@ -220,7 +234,6 @@ function App() {
                 : ''}
             {isFiring && isMyFireTurn ?
                 (<div>
-                        <p> Choose a square to fire at....</p>
                         <p>Time remaining: {timer} </p>
                         <Grid gridVals={firingGridVals} handleSquareChoice={updateSquareChoiceFiring}></Grid>
                         <button onClick={submitPlacements}> Submit Fire Location</button>
@@ -229,7 +242,6 @@ function App() {
                 : ''}
             {isFiring && !isMyFireTurn ?
                 (<div>
-                        <p> Waiting for other user's guess....</p>
                         <Grid gridVals={placingGridVals} handleSquareChoice={() => console.log(`Clicked square`)}></Grid>
                     </div>
                 )
