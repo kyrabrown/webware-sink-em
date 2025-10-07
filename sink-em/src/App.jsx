@@ -64,6 +64,14 @@ function App() {
                     setIsPlacing(false)
                     setIsFiring(true)
 
+                    if (payload.Result === 'H' || payload.Result === 'M') {
+                      setFiringGridVals(oldGrid => {
+                        const updateGrid = oldGrid.map(row => [...row])
+                      updateGrid[payload.X][payload.Y] = payload.Result
+                      return updateGrid
+                      })
+                    }
+
                     //check if current player's turn
                     if (payload.YourTurn) {
                         //do firing functionality to get user's guess square coordinates
@@ -112,9 +120,6 @@ function App() {
         }
 
         //update grid
-        const tempGrid = firingGridVals.map(row => [...row]);
-        tempGrid[x][y] = 'X'
-        setFiringGridVals(tempGrid)
         sendFiringSquare(x,y)
     };
 
