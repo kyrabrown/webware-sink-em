@@ -87,19 +87,20 @@ button:focus-visible {
 
 .code {
   @apply tracking-tight mb-6 text-indigo-950 dark:text-indigo-100
-         flex items-center justify-center gap-3;
+         flex items-center justify-center gap-3; 
 } 
 
 
 .page {
-  @apply min-h-screen w-full bg-gray-200 dark:bg-zinc-900 text-rose-600 dark:text-indigo-100
+  @apply min-h-screen w-full bg-gray-200 dark:bg-zinc-900 text-rose-600 dark:text-rose-500
     flex flex-col items-center justify-center;
 }
 
 /* Card */
 .card {
-  @apply p-8 rounded-md border border-2 border-dashed border-indigo-600 bg-slate-50 shadow-sm;
+  @apply p-8 rounded-md border border-2 border-dashed border-indigo-600 bg-slate-50 shadow-sm dark:bg-zinc-600;
 }
+
 
 /* 10×10 board grid with 18px gaps */
 .board-grid {
@@ -109,9 +110,9 @@ button:focus-visible {
 
 /* Each square: 3vw x 3vw, centered content, hover */
 .square {
-  @apply flex items-center justify-center select-none font-bold cursor-pointer
+  @apply flex items-center justify-center select-none font-bold cursor-pointer 
     border border-gray-300 text-red-600
-    bg-sky-100 hover:bg-gray-400
+    bg-sky-100 hover:bg-gray-400 dark:bg-indigo-300
     w-[3vw] h-[3vw] rounded-md;
 }
 
