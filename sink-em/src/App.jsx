@@ -1,4 +1,4 @@
-import {useRef, useState} from "react";
+import {useEffect, useRef, useState} from "react";
 import "./App.css";
 import Grid from "./Grid.jsx";
 
@@ -75,8 +75,7 @@ function App() {
 
                         //do firing functionality to get user's guess square coordinates
                         setTimeout(() => {
-                            setIsMyFireTurn(true)      
-                            startTimer()
+                            setIsMyFireTurn(true)
                         }, 5000)
 
                         //after firing has completed, send coordinates of square back to the server
@@ -165,18 +164,35 @@ function App() {
         ws.current.send(JSON.stringify({type: 'FiringGuess', payload: {GuessX: x, GuessY: y}}));
     }
 
-    function startTimer () {
-      setTimer(30)
-        const interval = setInterval(() => {
-          setTimer((t) => {
-            if (t === 0) {
-              clearInterval(interval)
-              setIsMyFireTurn(false)
-            }
-            return t - 1
-          })
-        }, 1000)
-    }
+    const killTimer = useRef(null)
+
+      useEffect(() => {
+        if (isMyFireTurn) {
+          setTimer (5)
+
+          killTimer.current = setInterval(() => {
+            setTimer (t => {
+              if (t <= 1) {
+                clearInterval(killTimer.current)
+                console.log("being read")
+                setIsMyFireTurn(false)
+                console.log("reached")
+                return 0
+              }
+              return t - 1
+            })
+          }, 1000)
+        }
+        return () => {
+          if (killTimer.current) {
+            setIsMyFireTurn(false)
+            clearInterval(killTimer.current)
+            killTimer.current = null
+            console.log("reached")
+          }
+        }
+      }, [isMyFireTurn])
+
 
     return (
         <div className="App">
