@@ -175,7 +175,7 @@ function App() {
               if (t <= 1) {
                 clearInterval(killTimer.current)
                 console.log("being read")
-                setIsMyFireTurn(false)
+                sendFiringSquare(-1, -1)
                 console.log("reached")
                 return 0
               }
@@ -185,7 +185,6 @@ function App() {
         }
         return () => {
           if (killTimer.current) {
-            setIsMyFireTurn(false)
             clearInterval(killTimer.current)
             killTimer.current = null
             console.log("reached")
