@@ -38,7 +38,7 @@ function overlaps(board, cells) {
 
 // Component for placing ships on the board
 export default function ShipPlacement({ onDone }) {
-    const [msg, setMsg] = useState("Place your ships (click to place, press R to rotate)");
+    const [msg, setMsg] = useState("Select your ships and place them below");
     const [board, setBoard] = useState(() => makeEmptyBoard());
     const [ships, setShips] = useState(() => INITIAL_SHIPS.map(s => ({ ...s })));
     const [selectedShipId, setSelectedShipId] = useState(INITIAL_SHIPS[0].id);
@@ -119,6 +119,7 @@ export default function ShipPlacement({ onDone }) {
     const removeShip = id => {
         const ship = ships.find(s => s.id === id);
         setMsg(ship.name + " removed")
+
         if (!ship || !ship.placed) return;
             const newBoard = board.map(row => [...row]);
         for (const [r, c] of ship.cells) newBoard[r][c] = null;
@@ -139,8 +140,8 @@ export default function ShipPlacement({ onDone }) {
     
     return (
         <div>
-            <h2>Place your ships</h2>
-            <div role="status" aria-live="polite" style={{ margin: "8px 0", fontWeight: 600 }}>{msg}</div>
+            <h2>Place Your Ships</h2>
+            <div role="status" aria-live="polite" style={{ margin: "8px 0px 25px 0px", fontWeight: 600 }}>{msg}</div>
 
             <div style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>
                 <div>
@@ -148,6 +149,9 @@ export default function ShipPlacement({ onDone }) {
                 </div>
                 <div style={{ textAlign: "left" }}>
                     <div>
+                        <strong>(Click to place, press R to rotate)</strong>
+                    </div>
+                    <div style={{ marginTop: 8 }}>
                         <strong>Orientation:</strong> <u>{orientation}</u>
                     </div>
                     <div style={{ marginTop: 8 }}>
