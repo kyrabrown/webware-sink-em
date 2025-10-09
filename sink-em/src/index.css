@@ -90,6 +90,10 @@ button:focus-visible {
          flex flex-col items-center justify-center;
 }
 
+.h2-nocenter {
+  @apply text-xl font-bold text-indigo-700 dark:text-indigo-300 mb-2;
+}
+
 .subtext {
   @apply text-center text-gray-600 dark:text-gray-300 mb-8
          flex flex-col items-center justify-center;

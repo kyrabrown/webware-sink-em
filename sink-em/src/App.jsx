@@ -22,6 +22,7 @@ function App() {
     const [switchTurnsCooldown, setSwitchTurnsCooldown] = useState(false)
     const [personalSunkShips, setPersonalSunkShips] = useState([])
     const [oppSunkShips, setOppSunkShips] = useState([])
+    // const [waitingForOponent, setWaitingForOponent] = useState(false);
 
     // track winner
     const [winner, setWinner] = useState("");
@@ -338,7 +339,6 @@ function App() {
                         <h2 className="h2"> Code Created 🛳️ </h2>
                          <p className="subtext"> Share this code with your opponent so they can join.</p>
                         <div className="code">
-                            {/* <p>Your code is: <strong>{gameCode}</strong></p>  */}
                             {/* copy to clipbaord button  */}
                              <div className="card-white">
                                 <span className="code-font">
@@ -374,7 +374,7 @@ function App() {
                 
             )}
 
-
+            {/* Start placing ships */}
             {isPlacing ? (
                 <div>
                     <ShipPlacement onDone={board => {
@@ -384,6 +384,7 @@ function App() {
                     }} />
                 </div>
             ) : ''}
+            
             {isFiring && isMyFireTurn ?
                 (<div className="flex flex-col items-center space-y-4">
                         { !switchTurnsCooldown ? (<p>Time remaining: {timer} </p>) : '' }
