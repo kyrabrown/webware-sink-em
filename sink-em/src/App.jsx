@@ -19,6 +19,8 @@ function App() {
     const [timer, setTimer] = useState(30)
     const [isGameEnded, setIsGameEnded] = useState(false)
     const [switchTurnsCooldown, setSwitchTurnsCooldown] = useState(false)
+    const [personalSunkShips, setPersonalSunkShips] = useState([])
+    const [oppSunkShips, setOppSunkShips] = useState([])
 
     // track winner
     const [winner, setWinner] = useState("");
@@ -59,7 +61,7 @@ function App() {
                 } else if (type === "Disconnected") {
                     setUserMessage("Your opponent has disconnected. The game has been reset. Reload to create a new game.")
                 } else if (type === "StartPlacing") {
-                    setUserMessage(type)
+                    setUserMessage("Start placing")
 
                     //change game state
                     setIsWaitingForReady(false)
@@ -73,6 +75,10 @@ function App() {
                     //start the firing stage of the game!
                     setIsPlacing(false)
                     setIsFiring(true)
+
+                    //set sunk ships 
+                    setPersonalSunkShips(payload.PersonaSunkShips)
+                    setOppSunkShips(payload.OppSunkShips)
 
                     //check if current player's turn
                     if (payload.YourTurn) {
@@ -95,15 +101,21 @@ function App() {
                         setTimeout(() => {
                             setUserMessage("It is your turn to fire. You have 30 seconds.")
                             setIsMyFireTurn(true)      
-                        }, 5000)
+                        }, 4000)
 
                         //after firing has completed, send coordinates of square back to the server
                     } else {
                         //upon receiving the your previous shot's hit/miss update, show your guess board 
                         //for 5 seconds before moving to showing your personal board
                         if(payload.Result === 'H') {
-                            setSwitchTurnsCooldown(true)
-                            setUserMessage("You hit a ship!")
+                            if(payload.DidSink) {
+                                setSwitchTurnsCooldown(true)
+                                setUserMessage("You sunk a ship!")
+                            }
+                            else {
+                                setSwitchTurnsCooldown(true)
+                                setUserMessage("You hit a ship!")
+                            }
                         }
                         else if(payload.Result === 'M') {
                             setSwitchTurnsCooldown(true)
@@ -121,7 +133,7 @@ function App() {
                             setUserMessage("Waiting for the opponent to fire")
                             setIsMyFireTurn(false)
                             setSwitchTurnsCooldown(false)
-                        }, 5000)
+                        }, 4000)
                     }
 
                 } else if (type === "End") {
@@ -195,10 +207,16 @@ function App() {
     }
 
     const submitPlacements = () => {
-        console.log("sending placement grid")
-        const tempGrid = placingGridVals.map(row => [...row]);
-        console.log("placing grid cals", placingGridVals)
-        ws.current.send(JSON.stringify({type: 'Placed', payload: {Placements: placingGridVals}}));
+
+        let ships = [
+            { id: "A", name: "Aircraft Carrier", size: 5, placed: false, cells: [[0,0], [0,1], [0,2], [0,3], [0,4]], sunk: false },
+            { id: "B", name: "Battleship", size: 4, placed: false, cells: [[1,0], [1,1], [1,2], [1,3]], sunk: false },
+            { id: "S", name: "Submarine", size: 3, placed: false, cells: [[2,0], [2,1], [2,2]], sunk: false },
+            { id: "C", name: "Cruiser", size: 3, placed: false, cells: [[3,0], [3,1], [3,2]], sunk: false },
+            { id: "D", name: "Destroyer", size: 2, placed: false, cells: [[4,0], [4,1]], sunk: false },
+        ]
+
+        ws.current.send(JSON.stringify({type: 'Placed', payload: {Placements: placingGridVals, Ships: ships}}));
     }
 
     const submitFiringCoords = () => {
@@ -212,7 +230,7 @@ function App() {
 
       setTimeout (() => {
         setIsMyFireTurn(false)
-      }, 5000)
+      }, 4000)
     }
 
     const sendFiringSquare = (x, y) => {
@@ -238,6 +256,9 @@ function App() {
         setIsMyFireTurn(false);
         setIsGameEnded(false);
         setWinner("");
+        setSwitchTurnsCooldown(false)
+        setPersonalSunkShips([])
+        setOppSunkShips([])
         };
 
 
@@ -338,6 +359,7 @@ function App() {
             {isFiring && isMyFireTurn ?
                 (<div className="flex flex-col items-center space-y-4">
                         { !switchTurnsCooldown ? (<p>Time remaining: {timer} </p>) : '' }
+                        <p> Ships you've sunk: {oppSunkShips} </p>
                         <p> Your Targeting Grid: </p>
                         <Grid gridVals={firingGridVals} handleSquareChoice={updateSquareChoiceFiring} selected={firingCoords}></Grid>
                         { !switchTurnsCooldown ? <button className ="btn" onClick={submitFiringCoords} disabled={!firingCoords}> Submit Fire Location</button>  : '' }
@@ -346,6 +368,7 @@ function App() {
                 : ''}
             {isFiring && !isMyFireTurn ?
                 (<div className="flex flex-col items-center space-y-4">
+                        <p> Your sunken ships: {personalSunkShips} </p>
                         <p> Your Fleet Grid: </p>
                         <Grid gridVals={placingGridVals} handleSquareChoice={() => console.log(`Clicked square`)}></Grid>
                     </div>
@@ -354,7 +377,7 @@ function App() {
             {isGameEnded ? (
                 <div className="flex flex-col items-center space-y-4">
                     <h2 className="text-2xl font-bold">Game Over</h2>
-                    <p className="text-lg">Winner: <strong>{winner}</strong></p>
+                    <p className="text-lg">Winner: player <strong>{winner}</strong></p>
                     <p> Game has ended</p>
                     <button className="btn" onClick={goHome}>Play again!</button>
                 </div>
