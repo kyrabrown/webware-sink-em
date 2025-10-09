@@ -2,11 +2,15 @@ import { useState } from "react";
 import "./App.css";
 
 
-function GridSquare({ row, col, onClick, value }) {
+function GridSquare({ row, col, onClick, value, isSelected }) {
+  
+  const squareCSS = {backgroundColor: isSelected ? 'yellow' : 'white'}
+
   return (
     <div
       onClick={() => onClick(row, col)}
-      className="square"
+      className= {`square ${isSelected ? 'selected' : ''}`}
+      style={squareCSS}
     >
       {value}
     </div>
@@ -14,7 +18,7 @@ function GridSquare({ row, col, onClick, value }) {
 }
 
 
-export default function Grid({gridVals, handleSquareChoice}) {
+export default function Grid({gridVals, handleSquareChoice, selected}) {
 
   // Handle square click
   const handleClick = (row, col) => {
@@ -34,7 +38,8 @@ export default function Grid({gridVals, handleSquareChoice}) {
               col={colIndex}
               value={value}
               onClick={handleClick}
-            />
+              isSelected={selected && selected.x === rowIndex && selected.y ===colIndex}
+          />
           ))
         )}
       </div>

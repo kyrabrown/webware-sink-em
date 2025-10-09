@@ -13,6 +13,7 @@ function App() {
     const [joinCode, setJoinCode] = useState('')
     const [isWaitingForReady, setIsWaitingForReady] = useState(true)
     const [isPlacing, setIsPlacing] = useState(false)
+    const [firingCoords, setFiringCoords] = useState(false)
     const [isFiring, setIsFiring] = useState(false)
     const [isMyFireTurn, setIsMyFireTurn] = useState(false)
     const [timer, setTimer] = useState(30)
@@ -160,8 +161,9 @@ function App() {
           return
         }
 
+        setFiringCoords ({x, y})
+
         //update grid
-        sendFiringSquare(x,y)
     };
 
     const makeGame = async () => {
@@ -193,6 +195,20 @@ function App() {
         const tempGrid = placingGridVals.map(row => [...row]);
         console.log("placing grid cals", placingGridVals)
         ws.current.send(JSON.stringify({type: 'Placed', payload: {Placements: placingGridVals}}));
+    }
+
+    const submitFiringCoords = () => {
+      if (!firingCoords){
+        return
+      }
+
+      const {x, y} = firingCoords
+      sendFiringSquare(x, y)
+      setFiringCoords(null)
+
+      setTimeout (() => {
+        setIsMyFireTurn(false)
+      }, 5000)
     }
 
     const sendFiringSquare = (x, y) => {
@@ -231,12 +247,10 @@ function App() {
             setTimer (t => {
               if (t <= 1) {
                 clearInterval(killTimer.current)
-                console.log("being read")
                 setIsMyFireTurn(false)
 
                 //send non-guess to server
                 ws.current.send(JSON.stringify({type: 'FiringNonGuess', payload: "None"}));
-                console.log("reached")
                 return 0
               }
               return t - 1
@@ -245,10 +259,8 @@ function App() {
         }
         return () => {
           if (killTimer.current) {
-            setIsMyFireTurn(false)
             clearInterval(killTimer.current)
             killTimer.current = null
-            console.log("reached")
           }
         }
       }, [isMyFireTurn])
@@ -323,8 +335,8 @@ function App() {
                 (<div className="flex flex-col items-center space-y-4">
                         { !switchTurnsCooldown ? (<p>Time remaining: {timer} </p>) : '' }
                         <p> Your Targeting Grid: </p>
-                        <Grid gridVals={firingGridVals} handleSquareChoice={updateSquareChoiceFiring}></Grid>
-                        { !switchTurnsCooldown ? <button className ="btn" onClick={submitPlacements}> Submit Fire Location</button>  : '' }
+                        <Grid gridVals={firingGridVals} handleSquareChoice={updateSquareChoiceFiring} selected={firingCoords}></Grid>
+                        { !switchTurnsCooldown ? <button className ="btn" onClick={submitFiringCoords} disabled={!firingCoords}> Submit Fire Location</button>  : '' }
                     </div>
                 )
                 : ''}
