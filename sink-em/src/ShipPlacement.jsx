@@ -20,7 +20,7 @@ const INITIAL_SHIPS = [
 function cellsForPlacement(row, col, size, orientation) {
     const cells = [];
     for (let i = 0; i < size; i++) {
-        cells.push(orientation === "H" ? [row, col + i] : [row + i, col]);
+        cells.push(orientation === "Horizontal" ? [row, col + i] : [row + i, col]);
     }
     return cells;
 }
@@ -38,10 +38,11 @@ function overlaps(board, cells) {
 
 // Component for placing ships on the board
 export default function ShipPlacement({ onDone }) {
+    const [msg, setMsg] = useState("Place your ships (click to place, press R to rotate)");
     const [board, setBoard] = useState(() => makeEmptyBoard());
     const [ships, setShips] = useState(() => INITIAL_SHIPS.map(s => ({ ...s })));
     const [selectedShipId, setSelectedShipId] = useState(INITIAL_SHIPS[0].id);
-    const [orientation, setOrientation] = useState("H"); // H = horizontal, V = vertical
+    const [orientation, setOrientation] = useState("Horizontal"); // Horizontal or  Vertical
 
 
     const selectedShip = useMemo(
@@ -54,14 +55,18 @@ export default function ShipPlacement({ onDone }) {
     useEffect(() => {
     const onKeyDown = (e) => {
         if (e.key === "r" || e.key === "R") {
-        setOrientation(o => (o === "H" ? "V" : "H"));
+        setOrientation(o => (o === "Horizontal" ? "Vertical" : "Horizontal"));
         return;
         }
         const idx = Number(e.key) - 1;
         if (idx >= 0 && idx < INITIAL_SHIPS.length) {
-        const wantedId = INITIAL_SHIPS[idx].id;
-        const wanted = ships.find(s => s.id === wantedId);
-        if (wanted && !wanted.placed) setSelectedShipId(wantedId);
+
+            const wantedId = INITIAL_SHIPS[idx].id;
+            const wanted = ships.find(s => s.id === wantedId);
+
+            if (wanted && !wanted.placed) {
+                setSelectedShipId(wantedId);
+            }
         }
     };
     window.addEventListener("keydown", onKeyDown);
@@ -69,12 +74,24 @@ export default function ShipPlacement({ onDone }) {
     }, [ships]);
 
 
-    // Handle click to place ship if valid
+    // Handle click to place ship (only if it's valid)
     const handleSquareClick = (r, c) => {
-        if (!selectedShip) return;
+        if (!selectedShip) {
+            return;
+        }
         const cells = cellsForPlacement(r, c, selectedShip.size, orientation);
-        if (!isInBounds(cells)) return; // ignores invalid placement
-        if (overlaps(board, cells)) return; // ignores overlaps
+
+        // ignores placing outside the board
+        if (!isInBounds(cells)) {
+            setMsg("Cannot place: " + selectedShip.name + "  is off the board")
+            return; 
+        } 
+
+        // ignores overlaps with other ships
+        if (overlaps(board, cells)) {
+            setMsg("Cannot place: " + selectedShip.name + " is overlaping an existing ship")
+            return; 
+        }
 
         //const newBoard = board.map(row => [...row + selectedShip.size]); 
         //for (const [rr, cc] of cells) newBoard[rr][cc] = '#1E90FF'; 
@@ -84,21 +101,24 @@ export default function ShipPlacement({ onDone }) {
         for (const [rr, cc] of cells) newBoard[rr][cc] = selectedShip.id;
         setBoard(newBoard);
 
-        // marks ship placed and auto-select next
+        // marks  placed ships and auto-select next one
         setShips(prev => {
         const updated = prev.map(s =>
             s.id === selectedShip.id ? { ...s, placed: true, cells } : s
         );
         const next = updated.find(s => !s.placed);
         setSelectedShipId(next ? next.id : null);
+
+        setMsg(selectedShip.name + " placed")
         return updated;
         });
 
     };
 
-    // remove last placed ship (undo) - convenience used during dev
+    // remove ships
     const removeShip = id => {
         const ship = ships.find(s => s.id === id);
+        setMsg(ship.name + " removed")
         if (!ship || !ship.placed) return;
             const newBoard = board.map(row => [...row]);
         for (const [r, c] of ship.cells) newBoard[r][c] = null;
@@ -120,13 +140,15 @@ export default function ShipPlacement({ onDone }) {
     return (
         <div>
             <h2>Place your ships</h2>
+            <div role="status" aria-live="polite" style={{ margin: "8px 0", fontWeight: 600 }}>{msg}</div>
+
             <div style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>
                 <div>
                     <Grid gridVals={gridVals} handleSquareChoice={handleSquareClick} />
                 </div>
                 <div style={{ textAlign: "left" }}>
                     <div>
-                        <strong>Orientation:</strong> {orientation} (press 'R' to rotate)
+                        <strong>Orientation:</strong> <u>{orientation}</u>
                     </div>
                     <div style={{ marginTop: 8 }}>
                         <strong>Ships</strong>
