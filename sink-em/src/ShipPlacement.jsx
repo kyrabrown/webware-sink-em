@@ -145,7 +145,7 @@ export default function ShipPlacement({ onDone }) {
 
             <div style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>
                 <div>
-                    <Grid gridVals={gridVals} handleSquareChoice={handleSquareClick} />
+                    <Grid gridVals={gridVals} handleSquareChoice={handleSquareClick} isForPlacing={true}/>
                 </div>
                 <div style={{ textAlign: "left" }}>
                     <div>

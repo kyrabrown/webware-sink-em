@@ -16,12 +16,11 @@ function GridSquare({ row, col, onClick, value, isSelected, isForPlacing }) {
     color = 'white'
   }
 
-  console.log("here!2")
-
   return (
     <div
       onClick={() => onClick(row, col)}
-       style={{ backgroundColor: color}}
+      className="square"
+      style={{ backgroundColor: color}}
     >
       {value}
     </div>
@@ -36,7 +35,6 @@ export default function Grid({gridVals, handleSquareChoice, selected, isForPlaci
     handleSquareChoice(row, col)
   };
 
-  console.log("here!1")
   return (
     // <div className="card">
       <div className="board-grid">
@@ -49,7 +47,7 @@ export default function Grid({gridVals, handleSquareChoice, selected, isForPlaci
               value={value}
               onClick={handleClick}
               isSelected={selected && selected.x === rowIndex && selected.y ===colIndex}
-              // isForPlacing={isForPlacing}
+              isForPlacing={isForPlacing}
           />
           ))
         )}
