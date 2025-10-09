@@ -196,15 +196,15 @@ export default function ShipPlacement({ onDone }) {
 
             <div style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>
 
+
+                <BoardWithAxes>
                 <div
                 ref={gridWrapRef}
                 onMouseMove={handleMouseMove}
                 onMouseLeave={handleMouseLeave}
                 style={{ position: "relative", display: "inline-block" }}>
 
-                    <BoardWithAxes>
-                    <Grid gridVals={gridVals} handleSquareChoice={handleSquareClick} isForPlacing={true}/>
-                    </BoardWithAxes>
+                <Grid gridVals={gridVals} handleSquareChoice={handleSquareClick} isForPlacing={true}/>
 
                 <div
                     style={{
@@ -213,7 +213,7 @@ export default function ShipPlacement({ onDone }) {
                     display: "grid",
                     gridTemplateColumns: "repeat(10, 3vw)",
                     gridTemplateRows: "repeat(10, 3vw)",
-                    gap: "18px",
+                    gap: "3px",
                     pointerEvents: "none",
                     }}
                 >
@@ -231,10 +231,10 @@ export default function ShipPlacement({ onDone }) {
                     ) : null
                     )}
                 </div>
-
-
-
                 </div>
+            </BoardWithAxes>
+
+
                 <div className="card-empty w-full max-w-lg mx-auto">
                     <div style={{ textAlign: "left" }}>
                         <div>

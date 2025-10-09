@@ -10,7 +10,7 @@ export default function BoardWithAxes({ children, size = 10 }) { // default of 1
   return (
     <div className="flex flex-col items-center"> 
     {/* X axis (letters) */}
-    <div className="flex ml-6">
+    <div className="flex ml-6 mb-3">
         <div className="w-0" /> {/* left padding to align numbers */}
         {letters.map((letter) => (
         <div

@@ -59,7 +59,7 @@
 
 /* 10×10 board grid with 18px gaps */
 .board-grid {
-  @apply grid grid-cols-10 gap-[3px] p-2
+  @apply grid grid-cols-10 gap-[3px]
     /* rounded-xl border border-dashed border-indigo-600 bg-slate-50; */
 }
 
