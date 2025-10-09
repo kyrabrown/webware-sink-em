@@ -132,7 +132,7 @@ export default function ShipPlacement({ onDone }) {
     useEffect(() => {
         // when all ships placed, call onDone with the board
         if (ships.every(s => s.placed)) {
-            onDone?.(board);
+            onDone?.(board, ships);
         }
     }, [ships, board, onDone]);
 
