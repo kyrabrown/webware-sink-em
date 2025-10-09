@@ -161,9 +161,13 @@ function App() {
           return
         }
 
-        setFiringCoords ({x, y})
-
-        //update grid
+        //check if square has already been guessed, if not, set
+        if(firingGridVals[x][y] === 'H' || firingGridVals[x][y] === 'M') {
+            return
+        }
+        else {
+            setFiringCoords ({x, y})
+        }
     };
 
     const makeGame = async () => {
