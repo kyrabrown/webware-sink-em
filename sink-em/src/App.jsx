@@ -1,7 +1,8 @@
-import {useRef, useState} from "react";
+import {useEffect, useRef, useState} from "react";
 import "./App.css";
 import Grid from "./Grid.jsx";
 import BoardWithAxes from "./axis.jsx"
+import ShipPlacement from "./ShipPlacement.jsx";
 
 function App() {
     const [placingGridVals, setPlacingGridVals] = useState(Array.from({length: 10}, () => Array(10).fill(null)));
@@ -13,9 +14,14 @@ function App() {
     const [joinCode, setJoinCode] = useState('')
     const [isWaitingForReady, setIsWaitingForReady] = useState(true)
     const [isPlacing, setIsPlacing] = useState(false)
+    const [firingCoords, setFiringCoords] = useState(false)
     const [isFiring, setIsFiring] = useState(false)
     const [isMyFireTurn, setIsMyFireTurn] = useState(false)
+    const [timer, setTimer] = useState(30)
     const [isGameEnded, setIsGameEnded] = useState(false)
+    const [switchTurnsCooldown, setSwitchTurnsCooldown] = useState(false)
+    const [personalSunkShips, setPersonalSunkShips] = useState([])
+    const [oppSunkShips, setOppSunkShips] = useState([])
 
     // track winner
     const [winner, setWinner] = useState("");
@@ -56,36 +62,85 @@ function App() {
                 } else if (type === "Disconnected") {
                     setUserMessage("Your opponent has disconnected. The game has been reset. Reload to create a new game.")
                 } else if (type === "StartPlacing") {
-                    setUserMessage(type)
+                    setUserMessage("Start placing")
 
                     //change game state
                     setIsWaitingForReady(false)
                     setIsPlacing(true)
                 } else if (type === "Firing") {
-                    setUserMessage(type + payload.YourTurn)
+
+                    //update boards
+                    setFiringGridVals(payload.guessGrid)
+                    setPlacingGridVals(payload.placingGrid)
 
                     //start the firing stage of the game!
                     setIsPlacing(false)
                     setIsFiring(true)
 
+                    //set sunk ships 
+                    setPersonalSunkShips(payload.PersonaSunkShips)
+                    setOppSunkShips(payload.OppSunkShips)
+
                     //check if current player's turn
                     if (payload.YourTurn) {
+                        //upon receiving the opponent's hit/miss update, show your personal board 
+                        //for 5 seconds before moving to showing your firing board 
+                        if(payload.Result === 'H') {
+                            setUserMessage("Your opponent hit your ship!")
+                        }
+                        else if(payload.Result === 'M') {
+                            setUserMessage("Your opponent missed!")
+                        }
+                        else if(payload.Result === "None") {
+                            setUserMessage("Both players ready. Starting game soon...")
+                        }
+                        else if(payload.Result === "No Fire") {
+                            setUserMessage("Your opponent did not make a guess in time, no shot fired.")
+                        }
+
                         //do firing functionality to get user's guess square coordinates
-                        setIsMyFireTurn(true)
+                        setTimeout(() => {
+                            setUserMessage("It is your turn to fire. You have 30 seconds.")
+                            setIsMyFireTurn(true)      
+                        }, 4000)
 
                         //after firing has completed, send coordinates of square back to the server
-
-                        let x = 5
-                        let y = 5 //dummy values for now
-                        sendFiringSquare(x, y)
-                        setIsMyFireTurn(false)
                     } else {
-                        //wait on other user to fire
-                        setIsMyFireTurn(false)
+                        //upon receiving the your previous shot's hit/miss update, show your guess board 
+                        //for 5 seconds before moving to showing your personal board
+                        if(payload.Result === 'H') {
+                            if(payload.DidSink) {
+                                setSwitchTurnsCooldown(true)
+                                setUserMessage("You sunk a ship!")
+                            }
+                            else {
+                                setSwitchTurnsCooldown(true)
+                                setUserMessage("You hit a ship!")
+                            }
+                        }
+                        else if(payload.Result === 'M') {
+                            setSwitchTurnsCooldown(true)
+                            setUserMessage("You missed!")
+                        }
+                        else if(payload.Result === "None") {
+                            setUserMessage("Both players ready. Starting game soon...")
+                        }
+                        else if(payload.Result === "No Fire") {
+                            setUserMessage("You did not make a guess in time, no shot fired.")
+                        }
+
+                        setTimeout(() => {
+                            //wait on other user to fire
+                            setUserMessage("Waiting for the opponent to fire")
+                            setIsMyFireTurn(false)
+                            setSwitchTurnsCooldown(false)
+                        }, 4000)
                     }
+
                 } else if (type === "End") {
                     //game has ended, display winner
                     console.log(payload.Winner)
+                    setUserMessage('')
                     setWinner(payload.Winner)
                     setIsMyFireTurn(false)
                     setIsFiring(false)
@@ -115,10 +170,17 @@ function App() {
     };
 
     const updateSquareChoiceFiring = (x, y) => {
-        //update grid
-        const tempGrid = firingGridVals.map(row => [...row]);
-        tempGrid[x][y] = 'X'
-        setFiringGridVals(tempGrid)
+        if (!isMyFireTurn) {
+          return
+        }
+
+        //check if square has already been guessed, if not, set
+        if(firingGridVals[x][y] === 'H' || firingGridVals[x][y] === 'M') {
+            return
+        }
+        else {
+            setFiringCoords ({x, y})
+        }
     };
 
     const makeGame = async () => {
@@ -146,10 +208,30 @@ function App() {
     }
 
     const submitPlacements = () => {
-        console.log("sending placement grid")
-        const tempGrid = placingGridVals.map(row => [...row]);
-        console.log("placing grid cals", placingGridVals)
-        ws.current.send(JSON.stringify({type: 'Placed', payload: {Placements: placingGridVals}}));
+
+        let ships = [
+            { id: "A", name: "Aircraft Carrier", size: 5, placed: false, cells: [[0,0], [0,1], [0,2], [0,3], [0,4]], sunk: false },
+            { id: "B", name: "Battleship", size: 4, placed: false, cells: [[1,0], [1,1], [1,2], [1,3]], sunk: false },
+            { id: "S", name: "Submarine", size: 3, placed: false, cells: [[2,0], [2,1], [2,2]], sunk: false },
+            { id: "C", name: "Cruiser", size: 3, placed: false, cells: [[3,0], [3,1], [3,2]], sunk: false },
+            { id: "D", name: "Destroyer", size: 2, placed: false, cells: [[4,0], [4,1]], sunk: false },
+        ]
+
+        ws.current.send(JSON.stringify({type: 'Placed', payload: {Placements: placingGridVals, Ships: ships}}));
+    }
+
+    const submitFiringCoords = () => {
+      if (!firingCoords){
+        return
+      }
+
+      const {x, y} = firingCoords
+      sendFiringSquare(x, y)
+      setFiringCoords(null)
+
+      setTimeout (() => {
+        setIsMyFireTurn(false)
+      }, 4000)
     }
 
     const sendFiringSquare = (x, y) => {
@@ -175,7 +257,39 @@ function App() {
         setIsMyFireTurn(false);
         setIsGameEnded(false);
         setWinner("");
+        setSwitchTurnsCooldown(false)
+        setPersonalSunkShips([])
+        setOppSunkShips([])
         };
+
+
+    const killTimer = useRef(null)
+
+      useEffect(() => {
+        if (isMyFireTurn) {
+          setTimer (30)
+
+          killTimer.current = setInterval(() => {
+            setTimer (t => {
+              if (t <= 1) {
+                clearInterval(killTimer.current)
+                setIsMyFireTurn(false)
+
+                //send non-guess to server
+                ws.current.send(JSON.stringify({type: 'FiringNonGuess', payload: "None"}));
+                return 0
+              }
+              return t - 1
+            })
+          }, 1000)
+        }
+        return () => {
+          if (killTimer.current) {
+            clearInterval(killTimer.current)
+            killTimer.current = null
+          }
+        }
+      }, [isMyFireTurn])
 
 
     return (
@@ -259,28 +373,33 @@ function App() {
                 </div>
                 
             )}
-            {isPlacing ?
-                (<div className="flex flex-col items-center space-y-4">
-                    <BoardWithAxes>
-                        <Grid gridVals={placingGridVals} handleSquareChoice={updateSquareChoicePlacing}></Grid>
-                    </BoardWithAxes>
-                        <button className ="btn" onClick={submitPlacements}> Submit Placements</button>
-                    </div>
-                )
-                : ''}
+
+
+            {isPlacing ? (
+                <div>
+                    <ShipPlacement onDone={board => {
+                        // send the board colors/values to server as Placements
+                        ws.current?.send(JSON.stringify({type: 'Placed', payload: {Placements: board}}));
+                        setIsPlacing(false);
+                    }} />
+                </div>
+            ) : ''}
             {isFiring && isMyFireTurn ?
                 (<div className="flex flex-col items-center space-y-4">
-                        <p> Choose a square to fire at....</p>
+                        { !switchTurnsCooldown ? (<p>Time remaining: {timer} </p>) : '' }
+                        <p> Ships you've sunk: {oppSunkShips} </p>
+                        <p> Your Targeting Grid: </p>
                         <BoardWithAxes>
-                            <Grid gridVals={firingGridVals} handleSquareChoice={updateSquareChoiceFiring}></Grid>
+                            <Grid gridVals={firingGridVals} handleSquareChoice={updateSquareChoiceFiring} selected={firingCoords}></Grid>
                         </BoardWithAxes>
-                        <button className ="btn" onClick={submitPlacements}> Submit Fire Location</button>
+                        { !switchTurnsCooldown ? <button className ="btn" onClick={submitFiringCoords} disabled={!firingCoords}> Submit Fire Location</button>  : '' }
                     </div>
                 )
                 : ''}
             {isFiring && !isMyFireTurn ?
                 (<div className="flex flex-col items-center space-y-4">
-                        <p> Waiting for other user's guess....</p>
+                        <p> Your sunken ships: {personalSunkShips} </p>
+                        <p> Your Fleet Grid: </p>
                         <BoardWithAxes>
                             <Grid gridVals={placingGridVals} handleSquareChoice={() => console.log(`Clicked square`)}></Grid>
                         </BoardWithAxes>
@@ -290,7 +409,7 @@ function App() {
             {isGameEnded ? (
                 <div className="flex flex-col items-center space-y-4">
                     <h2 className="text-2xl font-bold">Game Over</h2>
-                    <p className="text-lg">Winner: <strong>{winner}</strong></p>
+                    <p className="text-lg">Winner: player <strong>{winner}</strong></p>
                     <p> Game has ended</p>
                     <button className="btn" onClick={goHome}>Play again!</button>
                 </div>
