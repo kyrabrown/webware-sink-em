@@ -43,6 +43,14 @@ class Player {
         this.hasPlaced = false
         this.personalBoard = Array.from({length: 10}, () => Array(10).fill(null))
         this.guessesBoard = Array.from({length: 10}, () => Array(10).fill(null))
+        this.ships = [
+            { id: "A", name: "Aircraft Carrier", size: 5, placed: false, cells: [], sunk: false },
+            { id: "B", name: "Battleship", size: 4, placed: false, cells: [], sunk: false },
+            { id: "S", name: "Submarine", size: 3, placed: false, cells: [], sunk: false },
+            { id: "C", name: "Cruiser", size: 3, placed: false, cells: [], sunk: false },
+            { id: "D", name: "Destroyer", size: 2, placed: false, cells: [], sunk: false },
+        ] //CHANGE TO POPULATE WITH SENT SHIPS LATER
+        this.sunkShips = [] //populate with ids (A, B, S, C, D), to send to both users
     }
 }
 
@@ -70,13 +78,58 @@ class Game {
             for (let j = 0; j < 10; j++) {
 
                 // if opponent has a ship, but player's guessesBoard does not have a hit here
-                if (this.players[opponentID].personalBoard[i][j] === 'S' && this.players[playerID].guessesBoard[i][j] !== 'H') {
+                if (this.isHit(i, j, this.players[opponentID]) && this.players[playerID].guessesBoard[i][j] !== 'H') {
                     return false;
                 }
 
             }
         }
         return true; // all hits match with ships
+    }
+
+    checkSunkShip(hitCell, opponentID) {
+        //get opponent's ships
+        let oppShips = this.players[opponentID].ships
+
+        //go through each ship's cells and see if they contain our hitCell x and y
+        for(let i = 0; i < 5; i++) {
+            let shipHits = 0
+            let isCorrectShip = false
+
+            //for each cell in current ship
+            for(let j = 0; j < (oppShips[i].size); j++) {
+                if(oppShips[i].cells[j][0] === hitCell.X && oppShips[i].cells[j][1] === hitCell.Y) {
+                    //our hit was on ship i, so check if all cells in this ship map to 'H'
+                    isCorrectShip = true
+                }
+
+                //check if cell maps to a hit 
+                let x = oppShips[i].cells[j][0]
+                let y = oppShips[i].cells[j][1]
+
+                if(this.players[opponentID].personalBoard[x][y] === 'H') {
+                    shipHits += 1
+                }
+            }
+
+            //if this was the ship fired at, check if all the cells are hit, if so, its sunk 
+            if(isCorrectShip && shipHits === oppShips[i].size) {
+                oppShips[i].sunk = true
+                this.players[opponentID].sunkShips.push(oppShips[i].name)
+                return true
+            }
+        }
+
+        return false
+    }
+
+    isHit(x, y, opponent) {
+        if (opponent.personalBoard[x][y] === 'A' || opponent.personalBoard[x][y] === 'B' || opponent.personalBoard[x][y] === 'S' || opponent.personalBoard[x][y] === 'C' || opponent.personalBoard[x][y] === 'D') {
+            return true
+        }
+        else {
+            return false
+        }
     }
 
     handleReady(playerID) {
@@ -89,9 +142,10 @@ class Game {
         }
     }
 
-    handlePlacement(playerID, placements) {
+    handlePlacement(playerID, placements, ships) {
         //update player's placement board
         this.players[playerID].personalBoard = placements
+        this.players[playerID].ships = ships
         this.players[playerID].hasPlaced = true
 
         //check if both are in, if so, begin firing stage!
@@ -105,14 +159,20 @@ class Game {
         //determine if player's guess was a hit or miss and update guess board
         let opponent = this.getOpponent(playerID)
 
-        if (opponent.personalBoard[x][y] === 'S') {
+        if (this.isHit(x, y, opponent)) {
             //guess was a hit
             this.players[playerID].guessesBoard[x][y] = 'H'
-        } else {
+            opponent.personalBoard[x][y] = 'H'
+        } 
+        else {
             //guess was a miss
             this.players[playerID].guessesBoard[x][y] = 'M'
+            opponent.personalBoard[x][y] = 'M'
         }
 
+        //check if this sunk a ship 
+        let didSink = this.checkSunkShip({X: x, Y: y}, opponent.id)
+        
         //check if the player has won
         if (this.isAWinner(playerID, opponent.id)) {
             //if a winner, change game flags
@@ -120,6 +180,8 @@ class Game {
             this.isEnd = 1
             this.winner = playerID //change to display name later
         }
+
+        return didSink
     }
 }
 
@@ -234,51 +296,76 @@ app.ws('/ws', async (client, req) => {
                     }
                 }
             } else if (type === "Placed") {
-                game.handlePlacement(client.playerID, payload.Placements)
+                game.handlePlacement(client.playerID, payload.Placements, payload.Ships)
+
                 //send signal to begin the firing stage if both players have their placements in
                 if (!game.isPlacingShips && game.isFiring) {
                     await updateGameInMongo()
-                    client.send(JSON.stringify({type: 'Firing', payload: {YourTurn: true}}));
+                    client.send(JSON.stringify({type: 'Firing', payload: {YourTurn: true,
+                            placingGrid:  game.players[client.playerID].personalBoard, guessGrid: game.players[client.playerID].guessesBoard, Result: "None",
+                        PersonalSunkShips: [], OppSunkShips: []}}));
                     try {
-                        sockets[opponent.ws].send(JSON.stringify({type: 'Firing', payload: {YourTurn: false}}));
+                        sockets[opponent.ws].send(JSON.stringify({type: 'Firing', payload: {YourTurn: false,
+                                placingGrid: opponent.personalBoard, guessGrid: opponent.guessesBoard, Result: "None",
+                            PersonalSunkShips: [], OppSunkShips: []}}));
                     } catch (e) {
                         console.error("Client disconnected during a game")
                         await resetGame()
                     }
 
                 }
+            } else if (type === "FiringNonGuess") {
+                //player did not submit a guess in time, so let opponent take their turn
+                client.send(JSON.stringify({type: 'Firing', payload: {YourTurn: false,
+                                placingGrid:  game.players[client.playerID].personalBoard, guessGrid: game.players[client.playerID].guessesBoard, Result: "No Fire",
+                            PersonalSunkShips: game.players[client.playerID].sunkShips, OppSunkShips: opponent.sunkShips}}));
+                
+                sockets[opponent.ws].send(JSON.stringify({type: 'Firing', payload: {YourTurn: true,
+                                    placingGrid: opponent.personalBoard, guessGrid: opponent.guessesBoard, Result: "No Fire",
+                                PersonalSunkShips: opponent.sunkShips, OppSunkShips: game.players[client.playerID].sunkShips}}));
+
             } else if (type === "FiringGuess") {
                 try {
-                    game.handleFiringGuess(client.playerID, payload.GuessX, payload.GuessY)
-                    await updateGameInMongo()
+                    let hit = false
+                    let didSink = false
+                    if (payload.GuessX !== -1) {
+                        hit = game.isHit(payload.GuessX, payload.GuessY, opponent)
+                        didSink = game.handleFiringGuess(client.playerID, payload.GuessX, payload.GuessY)
+                        await updateGameInMongo()
+                    }
+                    //if game is not over, send signal to users to give next guess
+                    if (game.isFiring && !game.isEnd) {
+                        client.send(JSON.stringify({type: 'Firing', payload: {YourTurn: false,
+                                placingGrid:  game.players[client.playerID].personalBoard, guessGrid: game.players[client.playerID].guessesBoard, 
+                                Result: hit ? 'H' : 'M', DidSink: didSink, PersonalSunkShips: game.players[client.playerID].sunkShips, OppSunkShips: opponent.sunkShips}}));
+                        try {
+                            sockets[opponent.ws].send(JSON.stringify({type: 'Firing', payload: {YourTurn: true,
+                                    placingGrid: opponent.personalBoard, guessGrid: opponent.guessesBoard, 
+                                    Result: hit ? 'H' : 'M', DidSink: didSink, PersonalSunkShips: opponent.sunkShips, OppSunkShips: game.players[client.playerID].sunkShips}}));
+                        } catch (e) {
+                            console.log(e)
+                            console.error("Client disconnected during a game")
+                            await resetGame()
+                        }
+
+                    }
+
+                    //if game is over, send signal to users
+                    else if (game.isEnd) {
+                        client.send(JSON.stringify({type: 'End', payload: {Winner: game.winner}}));
+                        try {
+                            sockets[opponent.ws].send(JSON.stringify({type: 'End', payload: {Winner: game.winner}}));
+                        } catch (e) {
+                            console.log(e)
+                            console.error("Client disconnected during a game")
+                            await resetGame()
+                        }
+
+                    }
                 } catch (e) {
+                    console.log(e)
                     console.log("Client disconnected during a game")
                     await resetGame()
-                }
-
-
-                //if game is not over, send signal to users to give next guess
-                if (game.isFiring && !game.isEnd) {
-                    client.send(JSON.stringify({type: 'Firing', payload: {YourTurn: false}}));
-                    try {
-                        sockets[opponent.ws].send(JSON.stringify({type: 'Firing', payload: {YourTurn: true}}));
-                    } catch (e) {
-                        console.error("Client disconnected during a game")
-                        await resetGame()
-                    }
-
-                }
-
-                //if game is over, send signal to users
-                else if (game.isEnd) {
-                    client.send(JSON.stringify({type: 'End', payload: {Winner: game.winner}}));
-                    try {
-                        sockets[opponent.ws].send(JSON.stringify({type: 'End', payload: {Winner: game.winner}}));
-                    } catch (e) {
-                        console.error("Client disconnected during a game")
-                        await resetGame()
-                    }
-
                 }
             }
             await updateGameInMongo()

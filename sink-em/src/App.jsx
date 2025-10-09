@@ -1,7 +1,8 @@
-import {useRef, useState} from "react";
+import {useEffect, useRef, useState} from "react";
 import "./App.css";
 import Grid from "./Grid.jsx";
 import BoardWithAxes from "./axis.jsx"
+import ShipPlacement from "./ShipPlacement.jsx";
 
 function App() {
     const [placingGridVals, setPlacingGridVals] = useState(Array.from({length: 10}, () => Array(10).fill(null)));
@@ -13,9 +14,15 @@ function App() {
     const [joinCode, setJoinCode] = useState('')
     const [isWaitingForReady, setIsWaitingForReady] = useState(true)
     const [isPlacing, setIsPlacing] = useState(false)
+    const [firingCoords, setFiringCoords] = useState(false)
     const [isFiring, setIsFiring] = useState(false)
     const [isMyFireTurn, setIsMyFireTurn] = useState(false)
+    const [timer, setTimer] = useState(30)
     const [isGameEnded, setIsGameEnded] = useState(false)
+    const [switchTurnsCooldown, setSwitchTurnsCooldown] = useState(false)
+    const [personalSunkShips, setPersonalSunkShips] = useState([])
+    const [oppSunkShips, setOppSunkShips] = useState([])
+    // const [waitingForOponent, setWaitingForOponent] = useState(false);
 
     // track winner
     const [winner, setWinner] = useState("");
@@ -56,36 +63,85 @@ function App() {
                 } else if (type === "Disconnected") {
                     setUserMessage("Your opponent has disconnected. The game has been reset. Reload to create a new game.")
                 } else if (type === "StartPlacing") {
-                    setUserMessage(type)
+                    setUserMessage("Start placing")
 
                     //change game state
                     setIsWaitingForReady(false)
                     setIsPlacing(true)
                 } else if (type === "Firing") {
-                    setUserMessage(type + payload.YourTurn)
+
+                    //update boards
+                    setFiringGridVals(payload.guessGrid)
+                    setPlacingGridVals(payload.placingGrid)
 
                     //start the firing stage of the game!
                     setIsPlacing(false)
                     setIsFiring(true)
 
+                    //set sunk ships 
+                    setPersonalSunkShips(payload.PersonalSunkShips)
+                    setOppSunkShips(payload.OppSunkShips)
+
                     //check if current player's turn
                     if (payload.YourTurn) {
+                        //upon receiving the opponent's hit/miss update, show your personal board 
+                        //for 5 seconds before moving to showing your firing board 
+                        if(payload.Result === 'H') {
+                            setUserMessage("Your opponent hit your ship!")
+                        }
+                        else if(payload.Result === 'M') {
+                            setUserMessage("Your opponent missed!")
+                        }
+                        else if(payload.Result === "None") {
+                            setUserMessage("Both players ready. Starting game soon...")
+                        }
+                        else if(payload.Result === "No Fire") {
+                            setUserMessage("Your opponent did not make a guess in time, no shot fired.")
+                        }
+
                         //do firing functionality to get user's guess square coordinates
-                        setIsMyFireTurn(true)
+                        setTimeout(() => {
+                            setUserMessage("It is your turn to fire. You have 30 seconds.")
+                            setIsMyFireTurn(true)      
+                        }, 4000)
 
                         //after firing has completed, send coordinates of square back to the server
-
-                        let x = 5
-                        let y = 5 //dummy values for now
-                        sendFiringSquare(x, y)
-                        setIsMyFireTurn(false)
                     } else {
-                        //wait on other user to fire
-                        setIsMyFireTurn(false)
+                        //upon receiving the your previous shot's hit/miss update, show your guess board 
+                        //for 5 seconds before moving to showing your personal board
+                        if(payload.Result === 'H') {
+                            if(payload.DidSink) {
+                                setSwitchTurnsCooldown(true)
+                                setUserMessage("You sunk a ship!")
+                            }
+                            else {
+                                setSwitchTurnsCooldown(true)
+                                setUserMessage("You hit a ship!")
+                            }
+                        }
+                        else if(payload.Result === 'M') {
+                            setSwitchTurnsCooldown(true)
+                            setUserMessage("You missed!")
+                        }
+                        else if(payload.Result === "None") {
+                            setUserMessage("Both players ready. Starting game soon...")
+                        }
+                        else if(payload.Result === "No Fire") {
+                            setUserMessage("You did not make a guess in time, no shot fired.")
+                        }
+
+                        setTimeout(() => {
+                            //wait on other user to fire
+                            setUserMessage("Waiting for the opponent to fire")
+                            setIsMyFireTurn(false)
+                            setSwitchTurnsCooldown(false)
+                        }, 4000)
                     }
+
                 } else if (type === "End") {
                     //game has ended, display winner
                     console.log(payload.Winner)
+                    setUserMessage('')
                     setWinner(payload.Winner)
                     setIsMyFireTurn(false)
                     setIsFiring(false)
@@ -115,10 +171,17 @@ function App() {
     };
 
     const updateSquareChoiceFiring = (x, y) => {
-        //update grid
-        const tempGrid = firingGridVals.map(row => [...row]);
-        tempGrid[x][y] = 'X'
-        setFiringGridVals(tempGrid)
+        if (!isMyFireTurn) {
+          return
+        }
+
+        //check if square has already been guessed, if not, set
+        if(firingGridVals[x][y] === 'H' || firingGridVals[x][y] === 'M') {
+            return
+        }
+        else {
+            setFiringCoords ({x, y})
+        }
     };
 
     const makeGame = async () => {
@@ -145,15 +208,27 @@ function App() {
         ws.current.send(JSON.stringify({type: 'Ready', payload: {Ready: true}}));
     }
 
-    const submitPlacements = () => {
-        console.log("sending placement grid")
-        const tempGrid = placingGridVals.map(row => [...row]);
-        console.log("placing grid cals", placingGridVals)
-        ws.current.send(JSON.stringify({type: 'Placed', payload: {Placements: placingGridVals}}));
+    const submitPlacements = (grid, ships) => {
+
+
+        
+    }
+
+    const submitFiringCoords = () => {
+      if (!firingCoords){
+        return
+      }
+
+      const {x, y} = firingCoords
+      sendFiringSquare(x, y)
+      setFiringCoords(null)
+
+      setTimeout (() => {
+        setIsMyFireTurn(false)
+      }, 4000)
     }
 
     const sendFiringSquare = (x, y) => {
-        console.log("sending firing guess square:", x, y)
         ws.current.send(JSON.stringify({type: 'FiringGuess', payload: {GuessX: x, GuessY: y}}));
     }
 
@@ -175,93 +250,165 @@ function App() {
         setIsMyFireTurn(false);
         setIsGameEnded(false);
         setWinner("");
+        setSwitchTurnsCooldown(false)
+        setPersonalSunkShips([])
+        setOppSunkShips([])
         };
+
+
+    const killTimer = useRef(null)
+
+      useEffect(() => {
+        if (isMyFireTurn) {
+          setTimer (30)
+
+          killTimer.current = setInterval(() => {
+            setTimer (t => {
+              if (t <= 1) {
+                clearInterval(killTimer.current)
+                setIsMyFireTurn(false)
+
+                //send non-guess to server
+                ws.current.send(JSON.stringify({type: 'FiringNonGuess', payload: "None"}));
+                return 0
+              }
+              return t - 1
+            })
+          }, 1000)
+        }
+        return () => {
+          if (killTimer.current) {
+            clearInterval(killTimer.current)
+            killTimer.current = null
+          }
+        }
+      }, [isMyFireTurn])
 
 
     return (
         <div className="page">
-            <h1 className="h1"> Sink 'Em</h1>
+            <h1 className="h1">
+            <span className="bg-gradient-to-r from-rose-500 via-pink-500 to-indigo-500 bg-clip-text text-transparent">
+                Sink ’Em 🚢 
+            </span>
+            </h1>
+            <p className="subtext">
+            The Classic Naval Combat Game
+            </p>
+
+            {/* Create new or join existing game */}
             {userMessage}
             {!gameCreated && !joiningGame && (
-                <div className="flex flex-col items-center space-y-4">
-                    <button className ="btn" onClick={makeGame}>Create Game</button>
-                    <br></br>
-                    <br></br>
-                    <button className ="btn" onClick={() => {setJoiningGame(true); setUserMessage('')}}>Join Existing Game</button>
-                </div>
-            )}
-
-            {joiningGame && !gameCreated && (
-
-                <div className="flex flex-col items-center space-y-4">
-                    <p>Enter code here:</p>
-                    <input type="text" value={joinCode} onChange={(i) => setJoinCode(i.target.value)} className="border-2 border-gray-300 rounded-md p-2 text-black bg-white"/>
-                    <br></br>
-                    <br></br>
-                    <button className ="btn" onClick={joinGame}>Join game</button>
-                </div>
-            )}
-
-            {gameCreated && isWaitingForReady && (
-                <div className="flex flex-col items-center space-y-4">
-                    <div className="code">
-                        <p>Your code is: <strong>{gameCode}</strong></p> 
-                        {/* copy to clipbaord button  */}
-                        <button
-                            type="button"
-                            onClick={async () => {
-                                await navigator.clipboard.writeText(gameCode);   // ← copy!
-                            }} className="btn-copy"> 
-                            {/* Clipboard icon */}
-                            <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="w-4 h-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            strokeWidth={2}
-                            >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"
-                            />
-                            <rect width="8" height="4" x="8" y="2" rx="1" ry="1" />
+                <div className="card-empty w-full max-w-lg mx-auto">
+                    <div className="grid gap-3">
+                        <button className ="btn" onClick={makeGame}>⚓ Create Game</button>
+                        <button className ="btn-1" onClick={() => {setJoiningGame(true); setUserMessage('')}}>
+                            {/* link icon */}
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 015.657 5.657l-2.121 2.121a4 4 0 01-5.657-5.657M10.172 13.828a4 4 0 01-5.657-5.657l2.121-2.121a4 4 0 015.657 5.657" />
                             </svg>
-                        </button>
+                            Join Existing Game</button>
+                    </div>    
+                </div>
+            )}
+
+            {/* join existing game */}
+            {joiningGame && !gameCreated && (
+                <div className="card-empty w-full max-w-lg mx-auto">
+                    <div className="grid gap-3">
+                         <h2 className="h2"> Enter Game Code 🛳️ </h2>
+                         <p className="subtext">Join an exisitng battleship game.</p>
+                        <input type="text" value={joinCode} onChange={(i) => setJoinCode(i.target.value)} className="border-2 border-gray-300 rounded-md p-2 text-black bg-white" placeholder="e.g.68e827987889fd33716f834e"/>
+                        <button className ="btn" onClick={joinGame}>Join game</button>
                     </div>
-                    <button className ="btn" onClick={sendReadyToStart}> Ready</button>
+                </div>
+            )}
+            
+            {/* create game code for new game */}
+            {gameCreated && isWaitingForReady && (
+                <div className="card-empty w-full max-w-lg mx-auto">
+                    <div className="grid gap-3">
+                        <h2 className="h2"> Code Created 🛳️ </h2>
+                         <p className="subtext"> Share this code with your opponent so they can join.</p>
+                        <div className="code">
+                            {/* copy to clipbaord button  */}
+                             <div className="card-white">
+                                <span className="code-font">
+                                    {gameCode}
+                                </span>
+                            <button
+                                type="button"
+                                onClick={async () => {
+                                    await navigator.clipboard.writeText(gameCode);   // ← copy!
+                                }} className="btn-copy"> 
+                                {/* Clipboard icon */}
+                                <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="w-4 h-4"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                strokeWidth={2}
+                                >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"
+                                />
+                                <rect width="8" height="4" x="8" y="2" rx="1" ry="1" />
+                                </svg> Copy
+                            </button>
+                        </div>
+                         </div>
+                        <button className ="btn" onClick={sendReadyToStart}> Ready! </button>
+                    </div>
                 </div>
                 
             )}
-            {isPlacing ?
-                (<div className="flex flex-col items-center space-y-4">
-                    <BoardWithAxes>
-                        <Grid gridVals={placingGridVals} handleSquareChoice={updateSquareChoicePlacing}></Grid>
-                    </BoardWithAxes>
-                        <button className ="btn" onClick={submitPlacements}> Submit Placements</button>
-                    </div>
-                )
-                : ''}
+
+            {/* Start placing ships */}
+            {isPlacing ? (
+                <div>
+                    <ShipPlacement onDone={(board, ships) => {
+                        // send the board colors/values to server as Placements
+                        console.log("SENDING:", board, ships)
+                        ws.current.send(JSON.stringify({type: 'Placed', payload: {Placements: board, Ships: ships}}));
+                        setIsPlacing(false);
+                        setUserMessage("Waiting...")
+                    }} />
+                </div>
+            ) : ''}
+            
+            {/* Your turn to guess */}
             {isFiring && isMyFireTurn ?
                 (<div className="flex flex-col items-center space-y-4">
-                        <p> Choose a square to fire at....</p>
-                        <Grid gridVals={firingGridVals} handleSquareChoice={updateSquareChoiceFiring}></Grid>
-                        <button className ="btn" onClick={submitPlacements}> Submit Fire Location</button>
+                        { !switchTurnsCooldown ? (<p>Time remaining: {timer} </p>) : '' }
+                        <p> Ships you've sunk: {oppSunkShips} </p>
+                        <p> Your Targeting Grid: </p>
+                        <BoardWithAxes>
+                            <Grid gridVals={firingGridVals} handleSquareChoice={updateSquareChoiceFiring} selected={firingCoords} isForPlacing={false} ></Grid>
+                        </BoardWithAxes>
+                        { !switchTurnsCooldown ? <button className ="btn" onClick={submitFiringCoords} disabled={!firingCoords}> Submit Fire Location</button>  : '' }
                     </div>
                 )
                 : ''}
+
+            {/* Opponent's turn to guess */}
             {isFiring && !isMyFireTurn ?
                 (<div className="flex flex-col items-center space-y-4">
-                        <p> Waiting for other user's guess....</p>
-                        <Grid gridVals={placingGridVals} handleSquareChoice={() => console.log(`Clicked square`)}></Grid>
+                        <p> Your sunken ships: {personalSunkShips} </p>
+                        <p> Your Fleet Grid: </p>
+                        <BoardWithAxes>
+                            <Grid gridVals={placingGridVals} handleSquareChoice={() => console.log(`Clicked square`)} isForPlacing={false} ></Grid>
+                        </BoardWithAxes>
                     </div>
                 )
                 : ''}
+            {/* game over */}
             {isGameEnded ? (
                 <div className="flex flex-col items-center space-y-4">
                     <h2 className="text-2xl font-bold">Game Over</h2>
-                    <p className="text-lg">Winner: <strong>{winner}</strong></p>
+                    <p className="text-lg">Winner: player <strong>{winner}</strong></p>
                     <p> Game has ended</p>
                     <button className="btn" onClick={goHome}>Play again!</button>
                 </div>
