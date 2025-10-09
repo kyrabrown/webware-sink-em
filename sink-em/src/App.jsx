@@ -12,6 +12,7 @@ function App() {
     const [joinCode, setJoinCode] = useState('')
     const [isWaitingForReady, setIsWaitingForReady] = useState(true)
     const [isPlacing, setIsPlacing] = useState(false)
+    const [firingCoords, setFiringCoords] = useState(false)
     const [isFiring, setIsFiring] = useState(false)
     const [isMyFireTurn, setIsMyFireTurn] = useState(false)
     const [timer, setTimer] = useState(30)
@@ -124,8 +125,9 @@ function App() {
           return
         }
 
+        setFiringCoords ({x, y})
+
         //update grid
-        sendFiringSquare(x,y)
     };
 
     const makeGame = async () => {
@@ -159,6 +161,20 @@ function App() {
         ws.current.send(JSON.stringify({type: 'Placed', payload: {Placements: placingGridVals}}));
     }
 
+    const submitFiringCoords = () => {
+      if (!firingCoords){
+        return
+      }
+
+      const {x, y} = firingCoords
+      sendFiringSquare(x, y)
+      setFiringCoords(null)
+
+      setTimeout (() => {
+        setIsMyFireTurn(false)
+      }, 5000)
+    }
+
     const sendFiringSquare = (x, y) => {
         console.log("sending firing guess square:", x, y)
         ws.current.send(JSON.stringify({type: 'FiringGuess', payload: {GuessX: x, GuessY: y}}));
@@ -168,15 +184,13 @@ function App() {
 
       useEffect(() => {
         if (isMyFireTurn) {
-          setTimer (5)
+          setTimer (30)
 
           killTimer.current = setInterval(() => {
             setTimer (t => {
               if (t <= 1) {
                 clearInterval(killTimer.current)
-                console.log("being read")
                 sendFiringSquare(-1, -1)
-                console.log("reached")
                 return 0
               }
               return t - 1
@@ -187,7 +201,6 @@ function App() {
           if (killTimer.current) {
             clearInterval(killTimer.current)
             killTimer.current = null
-            console.log("reached")
           }
         }
       }, [isMyFireTurn])
@@ -237,8 +250,8 @@ function App() {
                 (<div>
                         <p> Choose a square to fire at....</p>
                         <p>Time remaining: {timer} </p>
-                        <Grid gridVals={firingGridVals} handleSquareChoice={updateSquareChoiceFiring}></Grid>
-                        <button onClick={submitPlacements}> Submit Fire Location</button>
+                        <Grid gridVals={firingGridVals} handleSquareChoice={updateSquareChoiceFiring} selected={firingCoords}></Grid>
+                        <button onClick={submitFiringCoords} disabled={!firingCoords}> Submit Fire Location</button>
                     </div>
                 )
                 : ''}
