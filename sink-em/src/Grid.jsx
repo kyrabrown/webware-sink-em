@@ -22,8 +22,6 @@ export default function Grid({gridVals, handleSquareChoice, selected}) {
 
   // Handle square click
   const handleClick = (row, col) => {
-    console.log(`Clicked square at row ${row}, col ${col}`);
-
     handleSquareChoice(row, col)
   };
 
