@@ -349,7 +349,8 @@ function App() {
                         console.log("SENDING:", board, ships)
                         ws.current.send(JSON.stringify({type: 'Placed', payload: {Placements: board, Ships: ships}}));
                         setIsPlacing(false);
-                    }} />
+
+                    }}/>
                 </div>
             ) : ''}
             {isFiring && isMyFireTurn ?
@@ -357,7 +358,7 @@ function App() {
                         { !switchTurnsCooldown ? (<p>Time remaining: {timer} </p>) : '' }
                         <p> Ships you've sunk: {oppSunkShips} </p>
                         <p> Your Targeting Grid: </p>
-                        <Grid gridVals={firingGridVals} handleSquareChoice={updateSquareChoiceFiring} selected={firingCoords}></Grid>
+                        <Grid gridVals={firingGridVals} handleSquareChoice={updateSquareChoiceFiring} selected={firingCoords} isForPlacing={false} ></Grid>
                         { !switchTurnsCooldown ? <button className ="btn" onClick={submitFiringCoords} disabled={!firingCoords}> Submit Fire Location</button>  : '' }
                     </div>
                 )
@@ -366,7 +367,7 @@ function App() {
                 (<div className="flex flex-col items-center space-y-4">
                         <p> Your sunken ships: {personalSunkShips} </p>
                         <p> Your Fleet Grid: </p>
-                        <Grid gridVals={placingGridVals} handleSquareChoice={() => console.log(`Clicked square`)}></Grid>
+                        <Grid gridVals={placingGridVals} handleSquareChoice={() => console.log(`Clicked square`)} isForPlacing={false} ></Grid>
                     </div>
                 )
                 : ''}
