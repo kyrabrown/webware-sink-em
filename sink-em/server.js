@@ -109,9 +109,11 @@ class Game {
             //guess was a hit
             this.players[playerID].guessesBoard[x][y] = 'H'
             opponent.personalBoard[x][y] = 'H'
-        } else {
+        } 
+        else {
             //guess was a miss
             this.players[playerID].guessesBoard[x][y] = 'M'
+            opponent.personalBoard[x][y] = 'M'
         }
 
         //check if the player has won
