@@ -78,7 +78,7 @@ function App() {
                     setIsFiring(true)
 
                     //set sunk ships 
-                    setPersonalSunkShips(payload.PersonaSunkShips)
+                    setPersonalSunkShips(payload.PersonalSunkShips)
                     setOppSunkShips(payload.OppSunkShips)
 
                     //check if current player's turn
@@ -207,17 +207,10 @@ function App() {
         ws.current.send(JSON.stringify({type: 'Ready', payload: {Ready: true}}));
     }
 
-    const submitPlacements = () => {
+    const submitPlacements = (grid, ships) => {
 
-        let ships = [
-            { id: "A", name: "Aircraft Carrier", size: 5, placed: false, cells: [[0,0], [0,1], [0,2], [0,3], [0,4]], sunk: false },
-            { id: "B", name: "Battleship", size: 4, placed: false, cells: [[1,0], [1,1], [1,2], [1,3]], sunk: false },
-            { id: "S", name: "Submarine", size: 3, placed: false, cells: [[2,0], [2,1], [2,2]], sunk: false },
-            { id: "C", name: "Cruiser", size: 3, placed: false, cells: [[3,0], [3,1], [3,2]], sunk: false },
-            { id: "D", name: "Destroyer", size: 2, placed: false, cells: [[4,0], [4,1]], sunk: false },
-        ]
 
-        ws.current.send(JSON.stringify({type: 'Placed', payload: {Placements: placingGridVals, Ships: ships}}));
+        
     }
 
     const submitFiringCoords = () => {
@@ -235,7 +228,6 @@ function App() {
     }
 
     const sendFiringSquare = (x, y) => {
-        console.log("sending firing guess square:", x, y)
         ws.current.send(JSON.stringify({type: 'FiringGuess', payload: {GuessX: x, GuessY: y}}));
     }
 
@@ -352,9 +344,10 @@ function App() {
 
             {isPlacing ? (
                 <div>
-                    <ShipPlacement onDone={board => {
+                    <ShipPlacement onDone={(board, ships) => {
                         // send the board colors/values to server as Placements
-                        ws.current?.send(JSON.stringify({type: 'Placed', payload: {Placements: board}}));
+                        console.log("SENDING:", board, ships)
+                        ws.current.send(JSON.stringify({type: 'Placed', payload: {Placements: board, Ships: ships}}));
                         setIsPlacing(false);
                     }} />
                 </div>

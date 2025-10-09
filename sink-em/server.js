@@ -78,7 +78,7 @@ class Game {
             for (let j = 0; j < 10; j++) {
 
                 // if opponent has a ship, but player's guessesBoard does not have a hit here
-                if (this.players[opponentID].personalBoard[i][j] === 'S' && this.players[playerID].guessesBoard[i][j] !== 'H') {
+                if (this.isHit(i, j, this.players[opponentID]) && this.players[playerID].guessesBoard[i][j] !== 'H') {
                     return false;
                 }
 
@@ -123,6 +123,15 @@ class Game {
         return false
     }
 
+    isHit(x, y, opponent) {
+        if (opponent.personalBoard[x][y] === 'A' || opponent.personalBoard[x][y] === 'B' || opponent.personalBoard[x][y] === 'S' || opponent.personalBoard[x][y] === 'C' || opponent.personalBoard[x][y] === 'D') {
+            return true
+        }
+        else {
+            return false
+        }
+    }
+
     handleReady(playerID) {
         this.players[playerID].isReady = true
 
@@ -150,7 +159,7 @@ class Game {
         //determine if player's guess was a hit or miss and update guess board
         let opponent = this.getOpponent(playerID)
 
-        if (opponent.personalBoard[x][y] === 'S') {
+        if (this.isHit(x, y, opponent)) {
             //guess was a hit
             this.players[playerID].guessesBoard[x][y] = 'H'
             opponent.personalBoard[x][y] = 'H'
@@ -320,12 +329,11 @@ app.ws('/ws', async (client, req) => {
                     let hit = false
                     let didSink = false
                     if (payload.GuessX !== -1) {
-                        hit = opponent.personalBoard[payload.GuessX][payload.GuessY] === 'S'
+                        hit = game.isHit(payload.GuessX, payload.GuessY, opponent)
                         didSink = game.handleFiringGuess(client.playerID, payload.GuessX, payload.GuessY)
                         await updateGameInMongo()
                     }
                     //if game is not over, send signal to users to give next guess
-                    console.log("ships: ", game.players[client.playerID].sunkShips, opponent.sunkShips)
                     if (game.isFiring && !game.isEnd) {
                         client.send(JSON.stringify({type: 'Firing', payload: {YourTurn: false,
                                 placingGrid:  game.players[client.playerID].personalBoard, guessGrid: game.players[client.playerID].guessesBoard, 
