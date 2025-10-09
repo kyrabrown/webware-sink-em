@@ -1,6 +1,7 @@
 import {useRef, useState} from "react";
 import "./App.css";
 import Grid from "./Grid.jsx";
+import ShipPlacement from "./ShipPlacement.jsx";
 
 function App() {
     const [placingGridVals, setPlacingGridVals] = useState(Array.from({length: 10}, () => Array(10).fill(null)));
@@ -184,13 +185,15 @@ function App() {
             )}
 
 
-            {isPlacing ?
-                (<div>
-                        <Grid gridVals={placingGridVals} handleSquareChoice={updateSquareChoicePlacing}></Grid>
-                        <button onClick={submitPlacements}> Submit Placements</button>
-                    </div>
-                )
-                : ''}
+            {isPlacing ? (
+                <div>
+                    <ShipPlacement onDone={board => {
+                        // send the board colors/values to server as Placements
+                        ws.current?.send(JSON.stringify({type: 'Placed', payload: {Placements: board}}));
+                        setIsPlacing(false);
+                    }} />
+                </div>
+            ) : ''}
             {isFiring && isMyFireTurn ?
                 (<div>
                         <p> Choose a square to fire at....</p>

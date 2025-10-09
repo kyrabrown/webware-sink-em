@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import {useEffect, useMemo, useState } from "react";
 import Grid from "./Grid.jsx";
 //import "./App.css";
 
@@ -8,12 +8,12 @@ const SIZE = 10;
 const makeEmptyBoard = () => Array.from({ length: SIZE }, () => Array.from({ length: SIZE }, () => null));
 
 // Battleship definitions (ids used on the board to mark ship cells)
-const INITIAL_BATTLES = [
+const INITIAL_SHIPS = [
     { id: "A", name: "Aircraft Carrier", size: 5, placed: false, cells: [] },
-    { id: "B", name: "Battleship", size: 4, placed: false, cells: [] },
-    { id: "S", name: "Submarine", size: 3, placed: false, cells: [] },
-    { id: "C", name: "Cruiser", size: 3, placed: false, cells: [] },
-    { id: "D", name: "Destroyer", size: 2, placed: false, cells: [] },
+    { id: "B", name: "Battleship",      size: 4, placed: false, cells: [] },
+    { id: "S", name: "Submarine",       size: 3, placed: false, cells: [] },
+    { id: "C", name: "Cruiser",         size: 3, placed: false, cells: [] },
+    { id: "D", name: "Destroyer",       size: 2, placed: false, cells: [] },
 ];
 
 // Get the list of cells a ship would occupy given starting cell, size, and orientation
@@ -39,48 +39,35 @@ function overlaps(board, cells) {
 // Component for placing ships on the board
 export default function ShipPlacement({ onDone }) {
     const [board, setBoard] = useState(() => makeEmptyBoard());
-    const [ships, setShips] = useState(() => INITIAL_BATTLES.map(s => ({ ...s })));
-    const [selectedShipId, setSelectedShipId] = useState(ships[0]?.id ?? null);
+    const [ships, setShips] = useState(() => INITIAL_SHIPS.map(s => ({ ...s })));
+    const [selectedShipId, setSelectedShipId] = useState(INITIAL_SHIPS[0].id);
     const [orientation, setOrientation] = useState("H"); // H = horizontal, V = vertical
-        // hover preview state intentionally omitted: Grid doesn't expose hover events
-        const [hoverCells] = useState([]);
 
-    const selectedShip = useMemo(() => ships.find(s => s.id === selectedShipId) ?? null, [ships, selectedShipId]);
 
-    // Temporary selector for ship placement
-    shipSelector(); {
+    const selectedShip = useMemo(
+        () => ships.find(s => s.id === selectedShipId) ?? null,
+        [ships, selectedShipId]
+        );
 
-        if (onKeyDown.key === "1" && placed === false) {
-        setSelectedShipId(ships["A"]?.id ?? null);
-        console.log("Selected: " + ships["A"]?.name ?? null);
-        }
-        if (onKeyDown.key === "2" && placed === false) { 
-            setSelectedShipId(ships["B"]?.id ?? null);
-            console.log("Selected: " + ships["B"]?.name ?? null);
-        }
-        if (onKeyDown.key === "3" && placed === false) {
-            setSelectedShipId(ships["S"]?.id ?? null);
-            console.log("Selected: " + ships["S"]?.name ?? null);
-        } 
-        if (onKeyDown.key === "4" && placed === false) {
-            setSelectedShipId(ships["C"]?.id ?? null);
-            console.log("Selected: " + ships["C"]?.name ?? null);
-        }
-        if (onKeyDown.key === "5" && placed === false) {
-            setSelectedShipId(ships["D"]?.id ?? null);
-            console.log("Selected: " + ships["D"]?.name ?? null);
-        }
-        
-    }
-    
-    // Handle 'R' key to rotate orientation
+
+    // Keyboard: R rotates, and 1 through5 selects ships (that are not placed)
     useEffect(() => {
-        const onKeyDown = e => {
-            if (e.key === "r" || e.key === "R") setOrientation(o => (o === "H" ? "V" : "H"));
-        };
-        window.addEventListener("keydown", onKeyDown);
-        return () => window.removeEventListener("keydown", onKeyDown);
-    }, []);
+    const onKeyDown = (e) => {
+        if (e.key === "r" || e.key === "R") {
+        setOrientation(o => (o === "H" ? "V" : "H"));
+        return;
+        }
+        const idx = Number(e.key) - 1;
+        if (idx >= 0 && idx < INITIAL_SHIPS.length) {
+        const wantedId = INITIAL_SHIPS[idx].id;
+        const wanted = ships.find(s => s.id === wantedId);
+        if (wanted && !wanted.placed) setSelectedShipId(wantedId);
+        }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+    }, [ships]);
+
 
     // Handle click to place ship if valid
     const handleSquareClick = (r, c) => {
@@ -89,19 +76,24 @@ export default function ShipPlacement({ onDone }) {
         if (!isInBounds(cells)) return; // ignores invalid placement
         if (overlaps(board, cells)) return; // ignores overlaps
 
-        // place ship
-        const newBoard = board.map(row => [...row + selectedShip.size]); //it is suppposed to make the number of squares selected the same as the ship size But it is not working yet :(
-        for (const [rr, cc] of cells) newBoard[rr][cc] = '#1E90FF'; //changes the square to represent ship as blue
+        //const newBoard = board.map(row => [...row + selectedShip.size]); 
+        //for (const [rr, cc] of cells) newBoard[rr][cc] = '#1E90FF'; 
+        //console.log("Placing ship at:", cells);
 
-
+        const newBoard = board.map(row => [...row]);
+        for (const [rr, cc] of cells) newBoard[rr][cc] = selectedShip.id;
         setBoard(newBoard);
 
-        // mark ship as placed
-        setShips(prev => prev.map(s => (s.id === selectedShip.id ? { ...s, placed: true, cells } : s)));
+        // marks ship placed and auto-select next
+        setShips(prev => {
+        const updated = prev.map(s =>
+            s.id === selectedShip.id ? { ...s, placed: true, cells } : s
+        );
+        const next = updated.find(s => !s.placed);
+        setSelectedShipId(next ? next.id : null);
+        return updated;
+        });
 
-        // pick next unplaced ship automatically
-            const next = ships.find(s => !s.placed && s.id !== selectedShip.id);
-            setSelectedShipId(next ? next.id : null);
     };
 
     // remove last placed ship (undo) - convenience used during dev
@@ -122,20 +114,15 @@ export default function ShipPlacement({ onDone }) {
         }
     }, [ships, board, onDone]);
 
-    // Render board values for Grid: show ship ids or hover preview 'S'
-    const gridVals = board.map(row => [...row]);
-    for (const [r, c] of hoverCells) {
-        if (r >= 0 && r < SIZE && c >= 0 && c < SIZE && gridVals[r][c] === null) {
-            gridVals[r][c] = (newBoard[rr][cc] = '#67CADB'); // visual hover marker
-        }
-    }
+    const gridVals = board;
 
+    
     return (
         <div>
             <h2>Place your ships</h2>
             <div style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>
                 <div>
-                    <Grid gridVals={gridVals} handleSquareChoice={(r, c) => handleSquareClick(r, c)} />
+                    <Grid gridVals={gridVals} handleSquareChoice={handleSquareClick} />
                 </div>
                 <div style={{ textAlign: "left" }}>
                     <div>
