@@ -17,6 +17,7 @@ function App() {
     const [isMyFireTurn, setIsMyFireTurn] = useState(false)
     const [timer, setTimer] = useState(30)
     const [isGameEnded, setIsGameEnded] = useState(false)
+    const [switchTurnsCooldown, setSwitchTurnsCooldown] = useState(false)
 
     // track winner
     const [winner, setWinner] = useState("");
@@ -82,12 +83,17 @@ function App() {
                         else if(payload.Result === 'M') {
                             setUserMessage("Your opponent missed!")
                         }
+                        else if(payload.Result === "None") {
+                            setUserMessage("Both players ready. Starting game soon...")
+                        }
+                        else if(payload.Result === "No Fire") {
+                            setUserMessage("Your opponent did not make a guess in time, no shot fired.")
+                        }
 
                         //do firing functionality to get user's guess square coordinates
                         setTimeout(() => {
                             setUserMessage("It is your turn to fire. You have 30 seconds.")
                             setIsMyFireTurn(true)      
-                            startTimer()
                         }, 5000)
 
                         //after firing has completed, send coordinates of square back to the server
@@ -95,22 +101,32 @@ function App() {
                         //upon receiving the your previous shot's hit/miss update, show your guess board 
                         //for 5 seconds before moving to showing your personal board
                         if(payload.Result === 'H') {
+                            setSwitchTurnsCooldown(true)
                             setUserMessage("You hit a ship!")
                         }
                         else if(payload.Result === 'M') {
+                            setSwitchTurnsCooldown(true)
                             setUserMessage("You missed!")
+                        }
+                        else if(payload.Result === "None") {
+                            setUserMessage("Both players ready. Starting game soon...")
+                        }
+                        else if(payload.Result === "No Fire") {
+                            setUserMessage("You did not make a guess in time, no shot fired.")
                         }
 
                         setTimeout(() => {
                             //wait on other user to fire
                             setUserMessage("Waiting for the opponent to fire")
                             setIsMyFireTurn(false)
+                            setSwitchTurnsCooldown(false)
                         }, 5000)
                     }
 
                 } else if (type === "End") {
                     //game has ended, display winner
                     console.log(payload.Winner)
+                    setUserMessage('')
                     setWinner(payload.Winner)
                     setIsMyFireTurn(false)
                     setIsFiring(false)
@@ -209,7 +225,7 @@ function App() {
 
       useEffect(() => {
         if (isMyFireTurn) {
-          setTimer (5)
+          setTimer (30)
 
           killTimer.current = setInterval(() => {
             setTimer (t => {
@@ -217,6 +233,9 @@ function App() {
                 clearInterval(killTimer.current)
                 console.log("being read")
                 setIsMyFireTurn(false)
+
+                //send non-guess to server
+                ws.current.send(JSON.stringify({type: 'FiringNonGuess', payload: "None"}));
                 console.log("reached")
                 return 0
               }
@@ -302,14 +321,16 @@ function App() {
                 : ''}
             {isFiring && isMyFireTurn ?
                 (<div className="flex flex-col items-center space-y-4">
-                        <p>Time remaining: {timer} </p>
+                        { !switchTurnsCooldown ? (<p>Time remaining: {timer} </p>) : '' }
+                        <p> Your Targeting Grid: </p>
                         <Grid gridVals={firingGridVals} handleSquareChoice={updateSquareChoiceFiring}></Grid>
-                        <button className ="btn" onClick={submitPlacements}> Submit Fire Location</button>
+                        { !switchTurnsCooldown ? <button className ="btn" onClick={submitPlacements}> Submit Fire Location</button>  : '' }
                     </div>
                 )
                 : ''}
             {isFiring && !isMyFireTurn ?
                 (<div className="flex flex-col items-center space-y-4">
+                        <p> Your Fleet Grid: </p>
                         <Grid gridVals={placingGridVals} handleSquareChoice={() => console.log(`Clicked square`)}></Grid>
                     </div>
                 )

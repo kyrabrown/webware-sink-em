@@ -252,6 +252,14 @@ app.ws('/ws', async (client, req) => {
                     }
 
                 }
+            } else if (type === "FiringNonGuess") {
+                //player did not submit a guess in time, so let opponent take their turn
+                client.send(JSON.stringify({type: 'Firing', payload: {YourTurn: false,
+                                placingGrid:  game.players[client.playerID].personalBoard, guessGrid: game.players[client.playerID].guessesBoard, Result: "No Fire"}}));
+                
+                sockets[opponent.ws].send(JSON.stringify({type: 'Firing', payload: {YourTurn: true,
+                                    placingGrid: opponent.personalBoard, guessGrid: opponent.guessesBoard, Result: "No Fire"}}));
+
             } else if (type === "FiringGuess") {
                 try {
                     const hit = opponent.personalBoard[payload.GuessX][payload.GuessY] === 'S'
