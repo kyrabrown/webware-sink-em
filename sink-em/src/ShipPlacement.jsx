@@ -1,4 +1,4 @@
-import {useEffect, useMemo, useState } from "react";
+import {useEffect, useMemo, useState, useRef} from "react";
 import Grid from "./Grid.jsx";
 import BoardWithAxes from "./axis.jsx";
 //import "./App.css";
@@ -40,6 +40,9 @@ function overlaps(board, cells) {
 // Component for placing ships on the board
 export default function ShipPlacement({ onDone }) {
     const [msg, setMsg] = useState("Select your ships and place them below.");
+    const [hoverCells, setHoverCells] = useState([]);
+    const [hoverAnchor, setHoverAnchor] = useState(null);
+    const gridWrapRef = useRef(null);
     const [board, setBoard] = useState(() => makeEmptyBoard());
     const [ships, setShips] = useState(() => INITIAL_SHIPS.map(s => ({ ...s })));
     const [selectedShipId, setSelectedShipId] = useState(INITIAL_SHIPS[0].id);
@@ -137,6 +140,53 @@ export default function ShipPlacement({ onDone }) {
     }, [ships, board, onDone]);
 
     const gridVals = board;
+    const handleMouseMove = (e) => {
+        const el = e.target;
+
+        if (!el || !el.classList || !el.classList.contains("square")) {
+            return;
+        }
+
+        // find row/col by the square's position
+        const gridEl = el.parentElement;
+        const children = Array.from(gridEl.children);
+        const index = children.indexOf(el);
+        
+        if (index < 0) {
+            return;
+        }
+
+        const r = Math.floor(index / SIZE);
+        const c = index % SIZE;
+
+        if (!selectedShip) {
+            setHoverCells([]);
+            return;
+        }
+
+        setHoverAnchor({ r, c });
+    };
+
+    const handleMouseLeave = () => {
+        setHoverAnchor (null)
+        setHoverCells([]);
+    };
+
+    // Updates the hover to rotate as soon as you rotate the ship
+    useEffect(() => {
+        if (!hoverAnchor || !selectedShip) {
+            setHoverCells([]);
+            return;
+        }
+        const cells = cellsForPlacement(
+            hoverAnchor.r,
+            hoverAnchor.c,
+            selectedShip.size,
+            orientation
+        );
+        setHoverCells(cells);
+    }, [hoverAnchor, selectedShip, orientation]);
+
 
     
     return (
@@ -145,10 +195,45 @@ export default function ShipPlacement({ onDone }) {
             <div role="status" aria-live="polite" style={{ margin: "8px 0px 25px 0px", fontWeight: 600 }}>{msg}</div>
 
             <div style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>
-                <div>
+
+                <div
+                ref={gridWrapRef}
+                onMouseMove={handleMouseMove}
+                onMouseLeave={handleMouseLeave}
+                style={{ position: "relative", display: "inline-block" }}>
+
                     <BoardWithAxes>
-                        <Grid gridVals={gridVals} handleSquareChoice={handleSquareClick} isForPlacing={true}/>
+                    <Grid gridVals={gridVals} handleSquareChoice={handleSquareClick} isForPlacing={true}/>
                     </BoardWithAxes>
+
+                <div
+                    style={{
+                    position: "absolute",
+                    inset: 0,
+                    display: "grid",
+                    gridTemplateColumns: "repeat(10, 3vw)",
+                    gridTemplateRows: "repeat(10, 3vw)",
+                    gap: "18px",
+                    pointerEvents: "none",
+                    }}
+                >
+                    {hoverCells.map(([r, c]) =>
+                    r >= 0 && r < SIZE && c >= 0 && c < SIZE ? (
+                        <div
+                        key={`${r}-${c}`}
+                        style={{
+                            gridColumnStart: c + 1,
+                            gridRowStart: r + 1,
+                            backgroundColor: "rgba(28, 240, 255, 0.56)", // the color when hovering over
+                            borderRadius: 4,
+                        }}
+                        />
+                    ) : null
+                    )}
+                </div>
+
+
+
                 </div>
                 <div className="card-empty w-full max-w-lg mx-auto">
                     <div style={{ textAlign: "left" }}>
