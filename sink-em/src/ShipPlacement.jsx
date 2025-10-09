@@ -1,5 +1,6 @@
 import {useEffect, useMemo, useState } from "react";
 import Grid from "./Grid.jsx";
+import BoardWithAxes from "./axis.jsx";
 //import "./App.css";
 
 
@@ -38,7 +39,7 @@ function overlaps(board, cells) {
 
 // Component for placing ships on the board
 export default function ShipPlacement({ onDone }) {
-    const [msg, setMsg] = useState("Select your ships and place them below");
+    const [msg, setMsg] = useState("Select your ships and place them below.");
     const [board, setBoard] = useState(() => makeEmptyBoard());
     const [ships, setShips] = useState(() => INITIAL_SHIPS.map(s => ({ ...s })));
     const [selectedShipId, setSelectedShipId] = useState(INITIAL_SHIPS[0].id);
@@ -140,38 +141,43 @@ export default function ShipPlacement({ onDone }) {
     
     return (
         <div>
-            <h2>Place Your Ships</h2>
+            <h2 className="h2-nocenter">Place Your Ships</h2>
             <div role="status" aria-live="polite" style={{ margin: "8px 0px 25px 0px", fontWeight: 600 }}>{msg}</div>
 
             <div style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>
                 <div>
-                    <Grid gridVals={gridVals} handleSquareChoice={handleSquareClick} isForPlacing={true}/>
+                    <BoardWithAxes>
+                        <Grid gridVals={gridVals} handleSquareChoice={handleSquareClick} isForPlacing={true}/>
+                    </BoardWithAxes>
                 </div>
-                <div style={{ textAlign: "left" }}>
-                    <div>
-                        <strong>(Click to place, press R to rotate)</strong>
-                    </div>
-                    <div style={{ marginTop: 8 }}>
-                        <strong>Orientation:</strong> <u>{orientation}</u>
-                    </div>
-                    <div style={{ marginTop: 8 }}>
-                        <strong>Ships</strong>
-                        <ul>
-                            {ships.map(s => (
-                                <li key={s.id} style={{ marginBottom: 6 }}>
-                                    <button
-                                        onClick={() => setSelectedShipId(s.id)}
-                                        disabled={s.placed}
-                                        style={{ marginRight: 8 }}
-                                    >
-                                        {s.name} ({s.size})
-                                    </button>
-                                    {s.placed ? (
-                                        <button onClick={() => removeShip(s.id)}>Remove</button>
-                                    ) : null}
-                                </li>
-                            ))}
-                        </ul>
+                <div className="card-empty w-full max-w-lg mx-auto">
+                    <div style={{ textAlign: "left" }}>
+                        <div>
+                            <strong>(Click to place, press R to rotate)</strong>
+                        </div>
+                        <div style={{ marginTop: 8 }}>
+                            <strong>Orientation:</strong> <u>{orientation}</u>
+                            {orientation === "Horizontal" ? " ↔️" : " ↕️"}
+                        </div>
+                        <div style={{ marginTop: 8 }}>
+                            <strong>Ships</strong>
+                            <ul>
+                                {ships.map(s => (
+                                    <li key={s.id} style={{ marginBottom: 6 }}>
+                                        <button
+                                            onClick={() => setSelectedShipId(s.id)}
+                                            disabled={s.placed}
+                                            style={{ marginRight: 8 }}
+                                        >
+                                            {s.name} ({s.size})
+                                        </button>
+                                        {s.placed ? (
+                                            <button onClick={() => removeShip(s.id)}>Remove</button>
+                                        ) : null}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
