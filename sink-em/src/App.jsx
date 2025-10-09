@@ -180,57 +180,82 @@ function App() {
 
     return (
         <div className="page">
-            <h1 className="h1"> Sink 'Em</h1>
+            <h1 className="h1">
+            <span className="bg-gradient-to-r from-rose-500 via-pink-500 to-indigo-500 bg-clip-text text-transparent">
+                Sink ’Em 🚢 
+            </span>
+            </h1>
+            <p className="subtext">
+            The Classic Naval Combat Game
+            </p>
+
+            {/* Create new or join existing game */}
             {userMessage}
             {!gameCreated && !joiningGame && (
-                <div className="flex flex-col items-center space-y-4">
-                    <button className ="btn" onClick={makeGame}>Create Game</button>
-                    <br></br>
-                    <br></br>
-                    <button className ="btn" onClick={() => {setJoiningGame(true); setUserMessage('')}}>Join Existing Game</button>
-                </div>
-            )}
-
-            {joiningGame && !gameCreated && (
-
-                <div className="flex flex-col items-center space-y-4">
-                    <p>Enter code here:</p>
-                    <input type="text" value={joinCode} onChange={(i) => setJoinCode(i.target.value)} className="border-2 border-gray-300 rounded-md p-2 text-black bg-white"/>
-                    <br></br>
-                    <br></br>
-                    <button className ="btn" onClick={joinGame}>Join game</button>
-                </div>
-            )}
-
-            {gameCreated && isWaitingForReady && (
-                <div className="flex flex-col items-center space-y-4">
-                    <div className="code">
-                        <p>Your code is: <strong>{gameCode}</strong></p> 
-                        {/* copy to clipbaord button  */}
-                        <button
-                            type="button"
-                            onClick={async () => {
-                                await navigator.clipboard.writeText(gameCode);   // ← copy!
-                            }} className="btn-copy"> 
-                            {/* Clipboard icon */}
-                            <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="w-4 h-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            strokeWidth={2}
-                            >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"
-                            />
-                            <rect width="8" height="4" x="8" y="2" rx="1" ry="1" />
+                <div className="card-empty w-full max-w-lg mx-auto">
+                    <div className="grid gap-3">
+                        <button className ="btn" onClick={makeGame}>⚓ Create Game</button>
+                        <button className ="btn-1" onClick={() => {setJoiningGame(true); setUserMessage('')}}>
+                            {/* link icon */}
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 015.657 5.657l-2.121 2.121a4 4 0 01-5.657-5.657M10.172 13.828a4 4 0 01-5.657-5.657l2.121-2.121a4 4 0 015.657 5.657" />
                             </svg>
-                        </button>
+                            Join Existing Game</button>
+                    </div>    
+                </div>
+            )}
+
+            {/* join existing game */}
+            {joiningGame && !gameCreated && (
+                <div className="card-empty w-full max-w-lg mx-auto">
+                    <div className="grid gap-3">
+                         <h2 className="h2"> Enter Game Code 🛳️ </h2>
+                         <p className="subtext">Join an exisitng battleship game.</p>
+                        <input type="text" value={joinCode} onChange={(i) => setJoinCode(i.target.value)} className="border-2 border-gray-300 rounded-md p-2 text-black bg-white" placeholder="e.g.68e827987889fd33716f834e"/>
+                        <button className ="btn" onClick={joinGame}>Join game</button>
                     </div>
-                    <button className ="btn" onClick={sendReadyToStart}> Ready</button>
+                </div>
+            )}
+            
+            {/* create game code for new game */}
+            {gameCreated && isWaitingForReady && (
+                <div className="card-empty w-full max-w-lg mx-auto">
+                    <div className="grid gap-3">
+                        <h2 className="h2"> Code Created 🛳️ </h2>
+                         <p className="subtext"> Share this code with your opponent so they can join.</p>
+                        <div className="code">
+                            {/* <p>Your code is: <strong>{gameCode}</strong></p>  */}
+                            {/* copy to clipbaord button  */}
+                             <div className="card-white">
+                                <span className="code-font">
+                                    {gameCode}
+                                </span>
+                            <button
+                                type="button"
+                                onClick={async () => {
+                                    await navigator.clipboard.writeText(gameCode);   // ← copy!
+                                }} className="btn-copy"> 
+                                {/* Clipboard icon */}
+                                <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="w-4 h-4"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                strokeWidth={2}
+                                >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"
+                                />
+                                <rect width="8" height="4" x="8" y="2" rx="1" ry="1" />
+                                </svg> Copy
+                            </button>
+                        </div>
+                         </div>
+                        <button className ="btn" onClick={sendReadyToStart}> Ready! </button>
+                    </div>
                 </div>
                 
             )}
@@ -246,7 +271,9 @@ function App() {
             {isFiring && isMyFireTurn ?
                 (<div className="flex flex-col items-center space-y-4">
                         <p> Choose a square to fire at....</p>
-                        <Grid gridVals={firingGridVals} handleSquareChoice={updateSquareChoiceFiring}></Grid>
+                        <BoardWithAxes>
+                            <Grid gridVals={firingGridVals} handleSquareChoice={updateSquareChoiceFiring}></Grid>
+                        </BoardWithAxes>
                         <button className ="btn" onClick={submitPlacements}> Submit Fire Location</button>
                     </div>
                 )
@@ -254,7 +281,9 @@ function App() {
             {isFiring && !isMyFireTurn ?
                 (<div className="flex flex-col items-center space-y-4">
                         <p> Waiting for other user's guess....</p>
-                        <Grid gridVals={placingGridVals} handleSquareChoice={() => console.log(`Clicked square`)}></Grid>
+                        <BoardWithAxes>
+                            <Grid gridVals={placingGridVals} handleSquareChoice={() => console.log(`Clicked square`)}></Grid>
+                        </BoardWithAxes>
                     </div>
                 )
                 : ''}
