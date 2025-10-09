@@ -1,4 +1,3 @@
-import { useState } from "react";
 import "./App.css";
 
 
@@ -10,9 +9,10 @@ function GridSquare({ row, col, onClick, value, isSelected }) {
     <div
       onClick={() => onClick(row, col)}
       className= {`square ${isSelected ? 'selected' : ''}`}
-      style={squareCSS}
+      // style={squareCSS}
+      style={{ backgroundColor: value ? '#0b84ff' : undefined }}
     >
-      {value}
+      {null}
     </div>
   );
 }

@@ -2,6 +2,7 @@ import {useEffect, useRef, useState} from "react";
 import "./App.css";
 import Grid from "./Grid.jsx";
 import BoardWithAxes from "./axis.jsx"
+import ShipPlacement from "./ShipPlacement.jsx";
 
 function App() {
     const [placingGridVals, setPlacingGridVals] = useState(Array.from({length: 10}, () => Array(10).fill(null)));
@@ -347,15 +348,17 @@ function App() {
                 </div>
                 
             )}
-            {isPlacing ?
-                (<div className="flex flex-col items-center space-y-4">
-                    <BoardWithAxes>
-                        <Grid gridVals={placingGridVals} handleSquareChoice={updateSquareChoicePlacing}></Grid>
-                    </BoardWithAxes>
-                        <button className ="btn" onClick={submitPlacements}> Submit Placements</button>
-                    </div>
-                )
-                : ''}
+
+
+            {isPlacing ? (
+                <div>
+                    <ShipPlacement onDone={board => {
+                        // send the board colors/values to server as Placements
+                        ws.current?.send(JSON.stringify({type: 'Placed', payload: {Placements: board}}));
+                        setIsPlacing(false);
+                    }} />
+                </div>
+            ) : ''}
             {isFiring && isMyFireTurn ?
                 (<div className="flex flex-col items-center space-y-4">
                         { !switchTurnsCooldown ? (<p>Time remaining: {timer} </p>) : '' }
