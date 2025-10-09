@@ -374,10 +374,12 @@ function App() {
                         console.log("SENDING:", board, ships)
                         ws.current.send(JSON.stringify({type: 'Placed', payload: {Placements: board, Ships: ships}}));
                         setIsPlacing(false);
+                        setUserMessage("Waiting...")
                     }} />
                 </div>
             ) : ''}
             
+            {/* Your turn to guess */}
             {isFiring && isMyFireTurn ?
                 (<div className="flex flex-col items-center space-y-4">
                         { !switchTurnsCooldown ? (<p>Time remaining: {timer} </p>) : '' }
@@ -390,6 +392,8 @@ function App() {
                     </div>
                 )
                 : ''}
+
+            {/* Opponent's turn to guess */}
             {isFiring && !isMyFireTurn ?
                 (<div className="flex flex-col items-center space-y-4">
                         <p> Your sunken ships: {personalSunkShips} </p>
@@ -400,6 +404,7 @@ function App() {
                     </div>
                 )
                 : ''}
+            {/* game over */}
             {isGameEnded ? (
                 <div className="flex flex-col items-center space-y-4">
                     <h2 className="text-2xl font-bold">Game Over</h2>
