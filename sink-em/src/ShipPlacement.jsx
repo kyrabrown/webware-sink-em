@@ -200,7 +200,7 @@ export default function ShipPlacement({ onDone }) {
                 onMouseLeave={handleMouseLeave}
                 style={{ position: "relative", display: "inline-block" }}>
 
-                <Grid gridVals={gridVals} handleSquareChoice={handleSquareClick} isForPlacing={true}/>
+                <Grid gridVals={gridVals} handleSquareChoice={handleSquareClick} isForPlacing={true} isFleetGrid={false}/>
 
                 <div
                     style={{
@@ -243,7 +243,7 @@ export default function ShipPlacement({ onDone }) {
                             <strong>Ships</strong>
                             <ul>
                                 {ships.map(s => (
-                                    <li key={s.id} className={selectedShipId===s.id && "selectedShip"} style={{ marginBottom: 6 }}>
+                                    <li key={s.id} className={selectedShipId===s.id ? "selectedShip" : ''} style={{ marginBottom: 6 }}>
                                         <button
                                             onClick={() => setSelectedShipId(s.id)}
                                             disabled={s.placed}

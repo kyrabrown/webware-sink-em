@@ -452,6 +452,7 @@ function App() {
                             handleSquareChoice={updateSquareChoiceFiring}
                             selected={firingCoords}
                             isForPlacing={false}
+                            isFleetGrid={false}
                             />
                         </BoardWithAxes>
                         </div>
@@ -497,7 +498,8 @@ function App() {
                             <Grid
                             gridVals={placingGridVals}
                             handleSquareChoice={() => {}}
-                            isForPlacing={true}  // show 🚢 on your own board
+                            isForPlacing={false}
+                            isFleetGrid={true}
                             />
                         </BoardWithAxes>
                         </div>

@@ -381,8 +381,9 @@ app.ws('/ws', async (client, req) => {
             console.log("Player disconnected:", client.playerID);
             const opponent = game.getOpponent(client.playerID)
             const player = game.players[client.playerID]
-            const playerName = player.displayName
+            let playerName = 'Opponent'
             if (player) {
+                playerName = player.displayName
                 delete sockets[game.players[client.playerID].ws]
             }
             if (opponent && sockets[opponent.ws]) {
