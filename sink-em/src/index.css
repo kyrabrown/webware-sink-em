@@ -19,6 +19,11 @@
          flex flex-col items-center justify-center;
 }
 
+.h3 {
+    @apply text-lg font-bold text-indigo-700 dark:text-indigo-300
+    flex flex-col items-center justify-center;
+}
+
 .h2-nocenter {
   @apply text-xl font-bold text-indigo-700 dark:text-indigo-300 mb-2;
 }

@@ -26,11 +26,10 @@ function App() {
     }
     const username = capitalize(adj[Math.floor(Math.random() * adj.length)]) + capitalize(animal[Math.floor(Math.random() * animal.length)])
     const [displayName, setDisplayName] = useState(username)
-    const [opponentDisplayName, setOpponentDisplayName] = useState("Opponent")
+    let opponentDisplayName = useRef("Opponent")
     const [switchTurnsCooldown, setSwitchTurnsCooldown] = useState(false)
     const [personalSunkShips, setPersonalSunkShips] = useState([])
     const [oppSunkShips, setOppSunkShips] = useState([])
-    // const [waitingForOponent, setWaitingForOponent] = useState(false);
 
     // track winner
     const [winner, setWinner] = useState("");
@@ -69,10 +68,10 @@ function App() {
                     setJoiningGame(false)
                     setGameCreated(false)
                 } else if (type === "Disconnected") {
-                    setUserMessage("Your opponent has disconnected. The game has been reset. Reload to create a new game.")
+                    setUserMessage(`${opponentDisplayName} has disconnected. The game has been reset. Reload to create a new game.`)
                 } else if (type === "StartPlacing") {
                     setUserMessage("Start placing")
-                    setOpponentDisplayName(payload.OpponentDisplayName)
+                    opponentDisplayName = payload.OpponentDisplayName
                     //change game state
                     setIsWaitingForReady(false)
                     setIsPlacing(true)
@@ -93,18 +92,18 @@ function App() {
                     //check if current player's turn
                     if (payload.YourTurn) {
                         //upon receiving the opponent's hit/miss update, show your personal board 
-                        //for 5 seconds before moving to showing your firing board 
+                        //for 5 seconds before moving to showing your firing board
                         if(payload.Result === 'H') {
-                            setUserMessage("Your opponent hit your ship!")
+                            setUserMessage(`${opponentDisplayName} hit your ship!`)
                         }
                         else if(payload.Result === 'M') {
-                            setUserMessage("Your opponent missed!")
+                            setUserMessage(`${opponentDisplayName} missed!`)
                         }
                         else if(payload.Result === "None") {
                             setUserMessage("Both players ready. Starting game soon...")
                         }
                         else if(payload.Result === "No Fire") {
-                            setUserMessage("Your opponent did not make a guess in time, no shot fired.")
+                            setUserMessage(`${opponentDisplayName} did not make a guess in time, no shot fired.`)
                         }
 
                         //do firing functionality to get user's guess square coordinates
@@ -115,7 +114,7 @@ function App() {
 
                         //after firing has completed, send coordinates of square back to the server
                     } else {
-                        //upon receiving the your previous shot's hit/miss update, show your guess board 
+                        //upon receiving your previous shot's hit/miss update, show your guess board
                         //for 5 seconds before moving to showing your personal board
                         if(payload.Result === 'H') {
                             if(payload.DidSink) {
@@ -140,7 +139,7 @@ function App() {
 
                         setTimeout(() => {
                             //wait on other user to fire
-                            setUserMessage("Waiting for the opponent to fire")
+                            setUserMessage(`Waiting for ${opponentDisplayName} to fire`)
                             setIsMyFireTurn(false)
                             setSwitchTurnsCooldown(false)
                         }, 4000)
@@ -218,12 +217,6 @@ function App() {
         } else {
             alert("You must choose a display name!")
         }
-    }
-
-    const submitPlacements = (grid, ships) => {
-
-
-
     }
 
     const submitFiringCoords = () => {
@@ -329,8 +322,8 @@ function App() {
                 <div className="card-empty w-full max-w-lg mx-auto">
                     <div className="grid gap-3">
                          <h2 className="h2"> Enter Game Code 🛳️ </h2>
-                         <p className="subtext">Join an exisitng battleship game.</p>
-                        <input type="text" value={joinCode} onChange={(i) => setJoinCode(i.target.value)} className="border-2 border-gray-300 rounded-md p-2 text-black bg-white" placeholder="e.g.68e827987889fd33716f834e"/>
+                         <p className="subtext">Join an existing battleship game.</p>
+                        <input type="text" value={joinCode} onChange={(i) => setJoinCode(i.target.value)} className="border-2 border-gray-300 rounded-md p-2 text-black bg-white" placeholder="e.g. 68e827987889fd33716f834e"/>
                         <button className ="btn" onClick={joinGame}>Join game</button>
                     </div>
                 </div>
@@ -343,7 +336,7 @@ function App() {
                         <h2 className="h2"> Code Created 🛳️ </h2>
                          <p className="subtext"> Share this code with your opponent so they can join.</p>
                         <div className="code">
-                            {/* copy to clipbaord button  */}
+                            {/* copy to clipboard button  */}
                              <div className="card-white">
                                 <span className="code-font">
                                     {gameCode}
@@ -372,6 +365,8 @@ function App() {
                             </button>
                         </div>
                          </div>
+                        <h3 className="h3"> Display Name: </h3>
+                        <input type="text" value={displayName} onChange={(i) => setDisplayName(i.target.value)} className="border-2 border-gray-300 rounded-md p-2 text-black bg-white" placeholder="Display Name"/>
                         <button className ="btn" onClick={sendReadyToStart}> Ready! </button>
                     </div>
                 </div>
@@ -420,7 +415,7 @@ function App() {
             {isGameEnded ? (
                 <div className="flex flex-col items-center space-y-4">
                     <h2 className="text-2xl font-bold">Game Over</h2>
-                    <p className="text-lg">Winner: player <strong>{winner}</strong></p>
+                    <p className="text-lg">Winner: <strong>{winner}</strong></p>
                     <p> Game has ended</p>
                     <button className="btn" onClick={goHome}>Play again!</button>
                 </div>
