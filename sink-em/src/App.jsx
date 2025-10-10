@@ -79,7 +79,7 @@ function App() {
                     setJoiningGame(false)
                     setGameCreated(false)
                 } else if (type === "Disconnected") {
-                    setUserMessage(`${payload.OppName} has disconnected. The game has been reset. Reload to create a new game.`)
+                    setUserMessage(`${opponentDisplayName.current} has disconnected. The game has been reset. Reload to create a new game.`)
                 } else if (type === "StartPlacing") {
                     setUserMessage("Start placing")
                     opponentDisplayName.current = payload.OpponentDisplayName
