@@ -27,7 +27,7 @@ The create game feature creates a game code the join game field accepts, and bot
 
 ## Group Members and Responsibilities:
 
-- **Andreas Keating** : 
+- **Andreas Keating** : Implemented battleship placement phase, which includes: placing ships on the grid, removing any placed ship of your choosing from the grid, a ship selector/inventory system, error checks that prevent overlapping ship placement and off grid ship placement, a feature that adds a "ship hovering silhouette" to allow the user to preview where the ship would be placed.
 - **Ceci Herriman** : Set up prototype with framework for communication, grid, and game stages. Further helped work on server/client communication for directing game state, architecture for managing necessary player/game data, and integrating placing phase with firing phase. Responsible for reviewing PRs.
 - **Christopher Yon** : Implemented storing games in MongoDB, and having multiple games running at once on the same server. Adapted create/join game functionality to use MongoDB object IDs as codes. Made initial server implementation much more resilient to edge cases, such as a player disconnecting during the middle of a game. Implemented display name functionality, prefilled with a random adjective + animal.  
 - **Kyra Brown** : Installed and implemented Tailwind for project.  Set up index.css file to have different classes to use.  Integrated frontend with user logic and functionality.  Created components like header, board axis, hit and miss icons, updating user statements and data to be visible.  Helped with debugging.
