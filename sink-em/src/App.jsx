@@ -316,22 +316,8 @@ function App() {
         );
         }
 
-
-
     return (
         <div className="page">
-            {!showHeader && (
-                <div className="text-center">
-                    <h1 className="h1">
-                    <span className="bg-gradient-to-r from-rose-500 via-pink-500 to-indigo-500 bg-clip-text text-transparent">
-                        Sink ’Em 🚢
-                    </span>
-                    </h1>
-                    <p className="subtext">The Classic Naval Combat Game</p>
-                    {/* {userMessage} */}
-                </div>
-            )}
-
             {showHeader && (
             <Header
                 title="Sink ’Em 🚢"
@@ -344,6 +330,19 @@ function App() {
                 onHome={goHome}
             />
             )}
+        <main className="flex-1 w-full flex flex-col items-center justify-center px-4">
+            {!showHeader && (
+                <div className="text-center">
+                    <h1 className="h1">
+                    <span className="bg-gradient-to-r from-rose-500 via-pink-500 to-indigo-500 bg-clip-text text-transparent">
+                        Sink ’Em 🚢
+                    </span>
+                    </h1>
+                    <p className="subtext">The Classic Naval Combat Game</p>
+                    {/* {userMessage} */}
+                </div>
+            )}
+
 
             {userMessage}
             {/* <br /> */}
@@ -532,7 +531,8 @@ function App() {
                 </div>
             ) : ''
             }
-        </div>
+        </main>
+    </div>
     );
 }
 

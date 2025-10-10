@@ -10,7 +10,7 @@ export default function Header({
   onHome,
 }) {
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-white">
+    <header className="sticky top-0 z-50 w-full border-b bg-white dark:bg-zinc-700 shadow-sm" role="banner">
       <div className="mx-auto max-w-6xl px-4 py-3 grid gap-2 sm:gap-x-10 sm:grid-cols-[1fr_auto_auto] items-center">
 
         {/* to the left: title, status */}
@@ -20,13 +20,13 @@ export default function Header({
               {title}
             </span>
           </h1>
-          <p className="text-sm text-gray-600 truncate">
+          <p className="text-sm text-gray-600 truncate dark:text-gray-300">
             {"The Classic Naval Combat Game"}
           </p>
         </div>
 
         {/* Middle: Names */}
-        <div className="flex items-center gap-4 text-sm text-gray-800">
+        <div className="flex items-center gap-4 text-sm text-gray-800 dark:text-gray-300">
           <div className="flex flex-col sm:text-right">
             <span className="font-medium">You</span>
             <span className="truncate">{displayName || "—"}</span>
