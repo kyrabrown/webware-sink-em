@@ -390,7 +390,13 @@ function App() {
             {isFiring && isMyFireTurn ?
                 (<div className="flex flex-col items-center space-y-4">
                         { !switchTurnsCooldown ? (<p>Time remaining: {timer} </p>) : '' }
-                        <p> Ships you've sunk: {oppSunkShips} </p>
+                        <p> Ships you've sunk: {oppSunkShips.map((ship, index) => {
+                            if (index===oppSunkShips.length-1){
+                                return ship
+                            } else {
+                                return ship + ", "
+                            }
+                        })} </p>
                         <p> Your Targeting Grid: </p>
                         <BoardWithAxes>
                             <Grid gridVals={firingGridVals} handleSquareChoice={updateSquareChoiceFiring} selected={firingCoords} isForPlacing={false} ></Grid>
@@ -403,7 +409,13 @@ function App() {
             {/* Opponent's turn to guess */}
             {isFiring && !isMyFireTurn ?
                 (<div className="flex flex-col items-center space-y-4">
-                        <p> Your sunken ships: {personalSunkShips} </p>
+                        <p> Your sunken ships: {personalSunkShips.map((ship, index) => {
+                            if (index===personalSunkShips.length-1){
+                                return ship
+                            } else {
+                                return ship + ", "
+                            }
+                        })} </p>
                         <p> Your Fleet Grid: </p>
                         <BoardWithAxes>
                             <Grid gridVals={placingGridVals} handleSquareChoice={() => console.log(`Clicked square`)} isForPlacing={false} ></Grid>

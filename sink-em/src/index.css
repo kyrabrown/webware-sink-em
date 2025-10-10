@@ -36,7 +36,11 @@
 .code-font {
   @apply text-lg font-mono tracking-wider text-indigo-700 dark:text-indigo-300
          flex items-center justify-center gap-3; 
-} 
+}
+
+.selectedShip {
+    @apply text-indigo-700 dark:text-indigo-300
+}
 
 .page {
   @apply min-h-screen w-full bg-gray-200 dark:bg-zinc-900 text-rose-500 dark:text-rose-500
