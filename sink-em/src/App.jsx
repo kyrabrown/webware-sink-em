@@ -80,6 +80,12 @@ function App() {
                     setGameCreated(false)
                 } else if (type === "Disconnected") {
                     setUserMessage(`${opponentDisplayName.current} has disconnected. The game has been reset. Reload to create a new game.`)
+
+                    //kill timer 
+                    if (killTimer.current) {
+                        clearInterval(killTimer.current)
+                        killTimer.current = null
+                    }
                 } else if (type === "StartPlacing") {
                     setUserMessage("Start placing")
                     opponentDisplayName.current = payload.OpponentDisplayName
