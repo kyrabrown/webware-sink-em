@@ -37,7 +37,7 @@ let sockets = {}
 class Player {
     constructor(id, ws) {
         this.id = id
-        this.displayName = "Guest"
+        this.displayName = "Player " + id
         this.isReady = false
         this.ws = ws
         this.hasPlaced = false
@@ -103,7 +103,7 @@ class Game {
                     isCorrectShip = true
                 }
 
-                //check if cell maps to a hit 
+                //check if cell maps to a hit
                 let x = oppShips[i].cells[j][0]
                 let y = oppShips[i].cells[j][1]
 
@@ -112,7 +112,7 @@ class Game {
                 }
             }
 
-            //if this was the ship fired at, check if all the cells are hit, if so, its sunk 
+            //if this was the ship fired at, check if all the cells are hit, if so, its sunk
             if(isCorrectShip && shipHits === oppShips[i].size) {
                 oppShips[i].sunk = true
                 this.players[opponentID].sunkShips.push(oppShips[i].name)
@@ -132,8 +132,10 @@ class Game {
         }
     }
 
-    handleReady(playerID) {
+
+    handleReady(playerID, displayName) {
         this.players[playerID].isReady = true
+        this.players[playerID].displayName = displayName
 
         //check if both are ready, if so, begin!
         if (Object.keys(this.players).length === 2 && this.players[0].isReady && this.players[1].isReady) {
@@ -163,22 +165,22 @@ class Game {
             //guess was a hit
             this.players[playerID].guessesBoard[x][y] = 'H'
             opponent.personalBoard[x][y] = 'H'
-        } 
+        }
         else {
             //guess was a miss
             this.players[playerID].guessesBoard[x][y] = 'M'
             opponent.personalBoard[x][y] = 'M'
         }
 
-        //check if this sunk a ship 
+        //check if this sunk a ship
         let didSink = this.checkSunkShip({X: x, Y: y}, opponent.id)
-        
+
         //check if the player has won
         if (this.isAWinner(playerID, opponent.id)) {
             //if a winner, change game flags
             this.isFiring = 0
             this.isEnd = 1
-            this.winner = playerID //change to display name later
+            this.winner = this.players[playerID].displayName
         }
 
         return didSink
@@ -266,15 +268,15 @@ app.ws('/ws', async (client, req) => {
 
             //parse based on message type and handle from there
             if (type === "Ready") {
-                game.handleReady(client.playerID)
+                game.handleReady(client.playerID, payload.DisplayName)
 
                 //send signal to begin placing ships if both ready
                 if (!game.isGameWaiting && game.isPlacingShips) {
-                    client.send(JSON.stringify({type: 'StartPlacing', payload: {StartPlacing: true}}));
+                    client.send(JSON.stringify({type: 'StartPlacing', payload: {StartPlacing: true, OpponentDisplayName: opponent.displayName}}));
                     try {
                         sockets[opponent.ws].send(JSON.stringify({
                             type: 'StartPlacing',
-                            payload: {StartPlacing: true}
+                            payload: {StartPlacing: true, OpponentDisplayName: game.players[client.playerID].displayName}
                         }));
                     } catch (e) {
                         console.error("Client disconnected during a game")
@@ -319,7 +321,7 @@ app.ws('/ws', async (client, req) => {
                 client.send(JSON.stringify({type: 'Firing', payload: {YourTurn: false,
                                 placingGrid:  game.players[client.playerID].personalBoard, guessGrid: game.players[client.playerID].guessesBoard, Result: "No Fire",
                             PersonalSunkShips: game.players[client.playerID].sunkShips, OppSunkShips: opponent.sunkShips}}));
-                
+
                 sockets[opponent.ws].send(JSON.stringify({type: 'Firing', payload: {YourTurn: true,
                                     placingGrid: opponent.personalBoard, guessGrid: opponent.guessesBoard, Result: "No Fire",
                                 PersonalSunkShips: opponent.sunkShips, OppSunkShips: game.players[client.playerID].sunkShips}}));
@@ -336,11 +338,11 @@ app.ws('/ws', async (client, req) => {
                     //if game is not over, send signal to users to give next guess
                     if (game.isFiring && !game.isEnd) {
                         client.send(JSON.stringify({type: 'Firing', payload: {YourTurn: false,
-                                placingGrid:  game.players[client.playerID].personalBoard, guessGrid: game.players[client.playerID].guessesBoard, 
+                                placingGrid:  game.players[client.playerID].personalBoard, guessGrid: game.players[client.playerID].guessesBoard,
                                 Result: hit ? 'H' : 'M', DidSink: didSink, PersonalSunkShips: game.players[client.playerID].sunkShips, OppSunkShips: opponent.sunkShips}}));
                         try {
                             sockets[opponent.ws].send(JSON.stringify({type: 'Firing', payload: {YourTurn: true,
-                                    placingGrid: opponent.personalBoard, guessGrid: opponent.guessesBoard, 
+                                    placingGrid: opponent.personalBoard, guessGrid: opponent.guessesBoard,
                                     Result: hit ? 'H' : 'M', DidSink: didSink, PersonalSunkShips: opponent.sunkShips, OppSunkShips: game.players[client.playerID].sunkShips}}));
                         } catch (e) {
                             console.log(e)

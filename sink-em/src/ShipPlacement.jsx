@@ -97,10 +97,6 @@ export default function ShipPlacement({ onDone }) {
             return; 
         }
 
-        //const newBoard = board.map(row => [...row + selectedShip.size]); 
-        //for (const [rr, cc] of cells) newBoard[rr][cc] = '#1E90FF'; 
-        //console.log("Placing ship at:", cells);
-
         const newBoard = board.map(row => [...row]);
         for (const [rr, cc] of cells) newBoard[rr][cc] = selectedShip.id;
         setBoard(newBoard);
@@ -248,7 +244,7 @@ export default function ShipPlacement({ onDone }) {
                             <strong>Ships</strong>
                             <ul>
                                 {ships.map(s => (
-                                    <li key={s.id} style={{ marginBottom: 6 }}>
+                                    <li key={s.id} className={selectedShipId===s.id && "selectedShip"} style={{ marginBottom: 6 }}>
                                         <button
                                             onClick={() => setSelectedShipId(s.id)}
                                             disabled={s.placed}

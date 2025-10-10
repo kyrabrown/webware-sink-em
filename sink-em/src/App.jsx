@@ -19,10 +19,17 @@ function App() {
     const [isMyFireTurn, setIsMyFireTurn] = useState(false)
     const [timer, setTimer] = useState(30)
     const [isGameEnded, setIsGameEnded] = useState(false)
+    const adj = ["frosty", "regal", "flustered", "fiery", "dapper", "zesty", "vibrant", "sneaky", "breezy", "grumpy", "bright", "charmed", "bashful", "eager", "weepy", "jovial", "active", "agile", "awkward", "quick", "slow", "fast", "speedy", "unhurried", "swift", "rapid", "deliberate", "aggressive", "wild", "tame", "docile", "harmless", "dangerous", "loud", "bold", "calm", "kind", "tough", "quiet", "urban", "funny", "rural", "messy", "goofy", "rowdy", "sad", "mad", "pro", "shy", "sly", "happy", "smart", "busy", "glad", "mean", "wise", "rude", "civil", "angry", "tired", "proud", "harsh", "upset", "loyal", "vocal", "brave", "alert", "bored", "naive", "weary", "merry", "dizzy", "witty", "moody", "timid", "jolly", "sassy", "picky", "irate", "social", "honest", "modest", "hungry", "scared", "gifted", "gentle", "decent", "casual", "strict", "brutal", "fierce", "clever", "mature", "loving", "polite", "lively", "amazed", "humble", "mighty", "heroic", "poetic", "tricky", "sleepy", "wicked", "ragged", "amused", "clumsy", "caring", "daring", "upbeat", "gloomy", "quirky", "frigid", "raging", "wanted", "unruly", "feeble", "dreamy", "sullen", "expert", "cranky", "nimble", "fickle", "frugal", "drowsy", "serious", "popular", "healthy", "careful", "violent", "leading", "nervous", "capable", "unknown", "helpful", "curious", "worried", "ethical", "excited", "patient", "wealthy", "dynamic", "content", "anxious", "elegant", "logical", "unhappy", "skilled", "hopeful", "devoted", "notable", "furious", "passive", "ashamed", "foolish", "relaxed", "jealous", "smiling", "fearful", "vicious", "puzzled", "sincere", "cynical", "frantic", "annoyed", "playful", "stylish", "stunned", "defiant", "runaway", "robotic", "trusted", "focused", "erratic", "worldly", "unnamed", "pitiful", "naughty", "cunning", "unlucky", "alarmed", "likable", "comical", "lovable", "envious", "zealous", "valiant", "tearful", "enraged", "aimless", "tactful", "positive", "powerful", "negative", "creative", "innocent", "friendly", "detailed", "artistic", "peaceful", "grateful", "generous", "talented", "tropical", "charming", "cautious", "confused", "sleeping", "credible", "sensible", "vigorous", "decisive", "obsessed", "imminent", "outraged", "affluent", "cheerful", "renowned", "graceful", "restless", "worrying", "stubborn", "thankful", "gracious", "outgoing", "ruthless", "reserved", "startled", "hesitant", "humorous", "eloquent", "aspiring", "fearless", "skillful", "nameless", "carefree", "diligent", "laughing", "lonesome", "selfless", "concerned", "emotional", "surprised", "technical", "confident", "brilliant", "skeptical", "respected", "dedicated", "energetic", "civilized", "impatient", "exhausted", "terrified", "talkative", "unfair", "shocked", "unaware", "seasick", "jubilant", "sheepish", "dejected", "likeable", "frazzled", "effective", "sensitive", "anonymous", "competent", "fictional", "qualified", "scholarly", "unwilling", "committed", "delighted", "suspected", "honorable", "executive", "eccentric", "visionary", "listening", "attentive", "traveling", "motivated", "proactive", "hilarious", "nostalgic", "admirable", "dignified", "forgiving", "welcoming", "righteous", "insistent", "assertive", "ferocious", "deserving", "acclaimed", "impartial", "secretive", "exuberant", "heartfelt", "sarcastic", "leisurely", "nocturnal", "agreeable", "indignant", "tenacious", "courteous", "easygoing", "irritated", "observant", "wandering", "merciless", "perplexed", "overjoyed", "contented", "unselfish", "forgetful", "immune", "mortal", "serene", "cheesy", "olympic", "pleased", "neutral", "adverse", "ominous", "festive", "ghostly", "adamant", "budding", "knowing", "glaring", "resting", "nagging", "honored", "mocking", "wishful", "wayward", "howling", "forlorn", "fleeing", "amiable", "lenient", "sketchy", "jittery", "dashing", "dutiful", "gleeful", "baffled", "admired", "thrifty", "untamed", "suspect", "bookish", "lurking", "cloaked", "involved", "academic", "dramatic", "unlikely", "handsome", "prepared", "rigorous", "animated", "coherent", "informed", "gleaming", "inspired", "tolerant", "discrete", "eclectic", "engaging", "honorary", "tutoring", "relieved", "discreet", "truthful", "vigilant", "literate", "virtuous", "watchful", "appalled", "marching", "tranquil", "charging", "brooding", "fearsome", "trusting", "tireless", "resolute", "exacting", "cultured", "rambling", "amenable", "unbiased", "dogmatic", "ordained", "olympian", "thrilled", "dismayed", "merciful", "blissful", "vengeful", "laudable", "skittish", "sociable", "vehement", "crawling", "stealthy", "downcast", "scornful", "reverent", "amicable", "princely", "pampered", "cheering", "fatigued", "juggling"]
+    const animal = ["alligator", "alpaca", "anteater", "antelope", "armadillo", "baboon", "badger", "bat", "bear", "beaver", "bird", "bison", "boa", "boar", "buffalo", "butterfly", "camel", "cat", "cheetah", "chimpanzee", "chipmunk", "cobra", "cow", "coyote", "crab", "crane", "crocodile", "crow", "deer", "dog", "dolphin", "dove", "dragonfly", "duck", "eagle", "elephant", "elk", "emu", "falcon", "ferret", "fish", "flamingo", "flicker", "fox", "gazelle", "gecko", "giraffe", "goat", "goose", "gorilla", "grizzly", "groundhog", "hawk", "hedgehog", "hen", "hippopotamus", "hyena", "iguana", "insect", "jackal", "jaguar", "kangaroo", "koala", "lemur", "leopard", "lion", "lizard", "llama", "lynx", "magpie", "manatee", "mockingbird", "mongoose", "monkey", "moose", "mouse", "orca", "ostrich", "otter", "owl", "ox", "peacock", "pelican", "penguin", "pigeon", "platypus", "porcupine", "possum", "puma", "python", "rabbit", "raccoon", "rat", "rattlesnake", "rhinoceros", "salmon", "seal", "shark", "sheep", "skunk", "sloth", "snake", "sparrow", "spider", "squirrel", "starfish", "swan", "tarantula", "tiger", "tortoise", "turkey", "turtle", "viper", "vulture", "whale", "wolf", "wombat", "woodpecker", "yak", "zebra"]
+    const capitalize = (str) => {
+        return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+    const username = capitalize(adj[Math.floor(Math.random() * adj.length)]) + capitalize(animal[Math.floor(Math.random() * animal.length)])
+    const [displayName, setDisplayName] = useState(username)
+    let opponentDisplayName = useRef("Opponent")
     const [switchTurnsCooldown, setSwitchTurnsCooldown] = useState(false)
     const [personalSunkShips, setPersonalSunkShips] = useState([])
     const [oppSunkShips, setOppSunkShips] = useState([])
-    // const [waitingForOponent, setWaitingForOponent] = useState(false);
 
     // track winner
     const [winner, setWinner] = useState("");
@@ -61,10 +68,10 @@ function App() {
                     setJoiningGame(false)
                     setGameCreated(false)
                 } else if (type === "Disconnected") {
-                    setUserMessage("Your opponent has disconnected. The game has been reset. Reload to create a new game.")
+                    setUserMessage(`${opponentDisplayName} has disconnected. The game has been reset. Reload to create a new game.`)
                 } else if (type === "StartPlacing") {
                     setUserMessage("Start placing")
-
+                    opponentDisplayName = payload.OpponentDisplayName
                     //change game state
                     setIsWaitingForReady(false)
                     setIsPlacing(true)
@@ -78,36 +85,36 @@ function App() {
                     setIsPlacing(false)
                     setIsFiring(true)
 
-                    //set sunk ships 
+                    //set sunk ships
                     setPersonalSunkShips(payload.PersonalSunkShips)
                     setOppSunkShips(payload.OppSunkShips)
 
                     //check if current player's turn
                     if (payload.YourTurn) {
                         //upon receiving the opponent's hit/miss update, show your personal board 
-                        //for 5 seconds before moving to showing your firing board 
+                        //for 5 seconds before moving to showing your firing board
                         if(payload.Result === 'H') {
-                            setUserMessage("Your opponent hit your ship!")
+                            setUserMessage(`${opponentDisplayName} hit your ship!`)
                         }
                         else if(payload.Result === 'M') {
-                            setUserMessage("Your opponent missed!")
+                            setUserMessage(`${opponentDisplayName} missed!`)
                         }
                         else if(payload.Result === "None") {
                             setUserMessage("Both players ready. Starting game soon...")
                         }
                         else if(payload.Result === "No Fire") {
-                            setUserMessage("Your opponent did not make a guess in time, no shot fired.")
+                            setUserMessage(`${opponentDisplayName} did not make a guess in time, no shot fired.`)
                         }
 
                         //do firing functionality to get user's guess square coordinates
                         setTimeout(() => {
                             setUserMessage("It is your turn to fire. You have 30 seconds.")
-                            setIsMyFireTurn(true)      
+                            setIsMyFireTurn(true)
                         }, 4000)
 
                         //after firing has completed, send coordinates of square back to the server
                     } else {
-                        //upon receiving the your previous shot's hit/miss update, show your guess board 
+                        //upon receiving your previous shot's hit/miss update, show your guess board
                         //for 5 seconds before moving to showing your personal board
                         if(payload.Result === 'H') {
                             if(payload.DidSink) {
@@ -132,7 +139,7 @@ function App() {
 
                         setTimeout(() => {
                             //wait on other user to fire
-                            setUserMessage("Waiting for the opponent to fire")
+                            setUserMessage(`Waiting for ${opponentDisplayName} to fire`)
                             setIsMyFireTurn(false)
                             setSwitchTurnsCooldown(false)
                         }, 4000)
@@ -204,14 +211,12 @@ function App() {
     }
 
     const sendReadyToStart = () => {
-        console.log("sending ready")
-        ws.current.send(JSON.stringify({type: 'Ready', payload: {Ready: true}}));
-    }
-
-    const submitPlacements = (grid, ships) => {
-
-
-        
+        if (displayName.length > 0){
+            console.log("sending ready")
+            ws.current.send(JSON.stringify({type: 'Ready', payload: {Ready: true, DisplayName: displayName}}));
+        } else {
+            alert("You must choose a display name!")
+        }
     }
 
     const submitFiringCoords = () => {
@@ -289,7 +294,7 @@ function App() {
         <div className="page">
             <h1 className="h1">
             <span className="bg-gradient-to-r from-rose-500 via-pink-500 to-indigo-500 bg-clip-text text-transparent">
-                Sink ’Em 🚢 
+                Sink ’Em 🚢
             </span>
             </h1>
             <p className="subtext">
@@ -308,7 +313,7 @@ function App() {
                             <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 015.657 5.657l-2.121 2.121a4 4 0 01-5.657-5.657M10.172 13.828a4 4 0 01-5.657-5.657l2.121-2.121a4 4 0 015.657 5.657" />
                             </svg>
                             Join Existing Game</button>
-                    </div>    
+                    </div>
                 </div>
             )}
 
@@ -317,13 +322,13 @@ function App() {
                 <div className="card-empty w-full max-w-lg mx-auto">
                     <div className="grid gap-3">
                          <h2 className="h2"> Enter Game Code 🛳️ </h2>
-                         <p className="subtext">Join an exisitng battleship game.</p>
-                        <input type="text" value={joinCode} onChange={(i) => setJoinCode(i.target.value)} className="border-2 border-gray-300 rounded-md p-2 text-black bg-white" placeholder="e.g.68e827987889fd33716f834e"/>
+                         <p className="subtext">Join an existing battleship game.</p>
+                        <input type="text" value={joinCode} onChange={(i) => setJoinCode(i.target.value)} className="border-2 border-gray-300 rounded-md p-2 text-black bg-white" placeholder="e.g. 68e827987889fd33716f834e"/>
                         <button className ="btn" onClick={joinGame}>Join game</button>
                     </div>
                 </div>
             )}
-            
+
             {/* create game code for new game */}
             {gameCreated && isWaitingForReady && (
                 <div className="card-empty w-full max-w-lg mx-auto">
@@ -331,7 +336,7 @@ function App() {
                         <h2 className="h2"> Code Created 🛳️ </h2>
                          <p className="subtext"> Share this code with your opponent so they can join.</p>
                         <div className="code">
-                            {/* copy to clipbaord button  */}
+                            {/* copy to clipboard button  */}
                              <div className="card-white">
                                 <span className="code-font">
                                     {gameCode}
@@ -340,7 +345,7 @@ function App() {
                                 type="button"
                                 onClick={async () => {
                                     await navigator.clipboard.writeText(gameCode);   // ← copy!
-                                }} className="btn-copy"> 
+                                }} className="btn-copy">
                                 {/* Clipboard icon */}
                                 <svg
                                 xmlns="http://www.w3.org/2000/svg"
@@ -360,10 +365,12 @@ function App() {
                             </button>
                         </div>
                          </div>
+                        <h3 className="h3"> Display Name: </h3>
+                        <input type="text" value={displayName} onChange={(i) => setDisplayName(i.target.value)} className="border-2 border-gray-300 rounded-md p-2 text-black bg-white" placeholder="Display Name"/>
                         <button className ="btn" onClick={sendReadyToStart}> Ready! </button>
                     </div>
                 </div>
-                
+
             )}
 
             {/* Start placing ships */}
@@ -378,12 +385,18 @@ function App() {
                     }} />
                 </div>
             ) : ''}
-            
+
             {/* Your turn to guess */}
             {isFiring && isMyFireTurn ?
                 (<div className="flex flex-col items-center space-y-4">
                         { !switchTurnsCooldown ? (<p>Time remaining: {timer} </p>) : '' }
-                        <p> Ships you've sunk: {oppSunkShips} </p>
+                        <p> Ships you've sunk: {oppSunkShips.map((ship, index) => {
+                            if (index===oppSunkShips.length-1){
+                                return ship
+                            } else {
+                                return ship + ", "
+                            }
+                        })} </p>
                         <p> Your Targeting Grid: </p>
                         <BoardWithAxes>
                             <Grid gridVals={firingGridVals} handleSquareChoice={updateSquareChoiceFiring} selected={firingCoords} isForPlacing={false} ></Grid>
@@ -396,7 +409,13 @@ function App() {
             {/* Opponent's turn to guess */}
             {isFiring && !isMyFireTurn ?
                 (<div className="flex flex-col items-center space-y-4">
-                        <p> Your sunken ships: {personalSunkShips} </p>
+                        <p> Your sunken ships: {personalSunkShips.map((ship, index) => {
+                            if (index===personalSunkShips.length-1){
+                                return ship
+                            } else {
+                                return ship + ", "
+                            }
+                        })} </p>
                         <p> Your Fleet Grid: </p>
                         <BoardWithAxes>
                             <Grid gridVals={placingGridVals} handleSquareChoice={() => console.log(`Clicked square`)} isForPlacing={false} ></Grid>
@@ -408,7 +427,7 @@ function App() {
             {isGameEnded ? (
                 <div className="flex flex-col items-center space-y-4">
                     <h2 className="text-2xl font-bold">Game Over</h2>
-                    <p className="text-lg">Winner: player <strong>{winner}</strong></p>
+                    <p className="text-lg">Winner: <strong>{winner}</strong></p>
                     <p> Game has ended</p>
                     <button className="btn" onClick={goHome}>Play again!</button>
                 </div>
