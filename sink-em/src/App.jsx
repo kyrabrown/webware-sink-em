@@ -286,7 +286,7 @@ function App() {
 
           killTimer.current = setInterval(() => {
             setTimer (t => {
-              if (t <= 1) {
+              if (t <= 0) {
                 clearInterval(killTimer.current)
                 setIsMyFireTurn(false)
 
