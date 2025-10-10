@@ -435,12 +435,14 @@ function App() {
             {/* your turn to fire */}
             {isFiring && isMyFireTurn && (
                 <div className="mx-auto max-w-6xl px-4">
+                    <div className="w-full text-center mb-4">
+                        {!switchTurnsCooldown && <p>Time remaining ⏳: {timer}</p>}
+                    </div>
                     <div className="flex flex-row items-start gap-8">
                     {/* headings centered + board */}
                     <div className="flex-1">
                         <div className="text-center space-y-2">
-                        {!switchTurnsCooldown && <p>Time remaining ⏳: {timer}</p>}
-                        <p>Your Targeting Grid:</p>
+                        <p className="h3">Your Targeting Grid:</p>
                         </div>
 
                         <div className="flex justify-center mt-2">
@@ -464,7 +466,7 @@ function App() {
                     </div>
 
                     {/* stacked cards */}
-                    <div className="flex flex-col gap-4 self-start">
+                    <div className="flex flex-col gap-4 self-start mt-30">
                         <div className="card-empty w-56 p-3 text-sm">
                         <h3 className="font-semibold mb-2">Legend</h3>
                         <ul className="space-y-1">
@@ -487,7 +489,7 @@ function App() {
                     {/* LEFT: headings centered + board */}
                     <div className="flex-1">
                         <div className="text-center space-y-2">
-                        <p>Your Fleet Grid:</p>
+                        <p className="h3">Your Fleet Grid:</p>
                         </div>
 
                         <div className="flex justify-center mt-2">
