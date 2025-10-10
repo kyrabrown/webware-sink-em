@@ -27,7 +27,7 @@ The create game feature creates a game code the join game field accepts, and bot
 ## Group Members and Responsibilities:
 
 - **Andreas Keating** : 
-- **Ceci Herriman** : Set up prototype with framework for communication, grid, and game stages. Also worked on server/client communication for directing game state, architecture for managing necessary player/game data, and integrating placing phase with firing phase
+- **Ceci Herriman** : Set up prototype with framework for communication, grid, and game stages. Further helped work on server/client communication for directing game state, architecture for managing necessary player/game data, and integrating placing phase with firing phase. Responsible for reviewing PRs.
 - **Christopher Yon** : 
 - **Kyra Brown** : 
 - **Kelsey Bishqemi** : Create/join game funtion, frontend firing
