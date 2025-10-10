@@ -3,6 +3,7 @@ import "./App.css";
 import Grid from "./Grid.jsx";
 import BoardWithAxes from "./axis.jsx"
 import ShipPlacement from "./ShipPlacement.jsx";
+import Header from "./Header.jsx";
 
 function App() {
     const [placingGridVals, setPlacingGridVals] = useState(Array.from({length: 10}, () => Array(10).fill(null)));
@@ -33,6 +34,16 @@ function App() {
 
     // track winner
     const [winner, setWinner] = useState("");
+
+    // show header only when game in session
+    // show header only during actual gameplay boards
+    const showHeader =
+    gameCreated &&
+    !isWaitingForReady &&
+    (isPlacing || isFiring) &&
+    !!displayName &&
+    !isGameEnded; // hide once game ends
+
 
 
     const ws = useRef(null);
@@ -68,10 +79,16 @@ function App() {
                     setJoiningGame(false)
                     setGameCreated(false)
                 } else if (type === "Disconnected") {
-                    setUserMessage(`${opponentDisplayName} has disconnected. The game has been reset. Reload to create a new game.`)
+                    setUserMessage(`${opponentDisplayName.current} has disconnected. The game has been reset. Reload to create a new game.`)
+
+                    //kill timer 
+                    if (killTimer.current) {
+                        clearInterval(killTimer.current)
+                        killTimer.current = null
+                    }
                 } else if (type === "StartPlacing") {
                     setUserMessage("Start placing")
-                    opponentDisplayName = payload.OpponentDisplayName
+                    opponentDisplayName.current = payload.OpponentDisplayName
                     //change game state
                     setIsWaitingForReady(false)
                     setIsPlacing(true)
@@ -94,16 +111,16 @@ function App() {
                         //upon receiving the opponent's hit/miss update, show your personal board 
                         //for 5 seconds before moving to showing your firing board
                         if(payload.Result === 'H') {
-                            setUserMessage(`${opponentDisplayName} hit your ship!`)
+                            setUserMessage(`${opponentDisplayName.current} hit your ship! 💥`)
                         }
                         else if(payload.Result === 'M') {
-                            setUserMessage(`${opponentDisplayName} missed!`)
+                            setUserMessage(`${opponentDisplayName.current} missed! 🌊`)
                         }
                         else if(payload.Result === "None") {
                             setUserMessage("Both players ready. Starting game soon...")
                         }
                         else if(payload.Result === "No Fire") {
-                            setUserMessage(`${opponentDisplayName} did not make a guess in time, no shot fired.`)
+                            setUserMessage(`${opponentDisplayName.current} did not make a guess in time, no shot fired.`)
                         }
 
                         //do firing functionality to get user's guess square coordinates
@@ -119,16 +136,16 @@ function App() {
                         if(payload.Result === 'H') {
                             if(payload.DidSink) {
                                 setSwitchTurnsCooldown(true)
-                                setUserMessage("You sunk a ship!")
+                                setUserMessage("You sunk a ship! ☠️")
                             }
                             else {
                                 setSwitchTurnsCooldown(true)
-                                setUserMessage("You hit a ship!")
+                                setUserMessage("You hit a ship! 💥")
                             }
                         }
                         else if(payload.Result === 'M') {
                             setSwitchTurnsCooldown(true)
-                            setUserMessage("You missed!")
+                            setUserMessage("You missed! 🌊")
                         }
                         else if(payload.Result === "None") {
                             setUserMessage("Both players ready. Starting game soon...")
@@ -139,7 +156,7 @@ function App() {
 
                         setTimeout(() => {
                             //wait on other user to fire
-                            setUserMessage(`Waiting for ${opponentDisplayName} to fire`)
+                            setUserMessage(`Waiting for ${opponentDisplayName.current} to fire..`)
                             setIsMyFireTurn(false)
                             setSwitchTurnsCooldown(false)
                         }, 4000)
@@ -289,20 +306,54 @@ function App() {
         }
       }, [isMyFireTurn])
 
+      // show sunken ships to the rigth of board
+      function SunkenShipsCard({ title, ships }) {
+        return (
+            <div className="card-empty w-56 p-3 text-sm">
+            <h3 className="font-semibold mb-2">{title}</h3>
+            {ships?.length ? (
+                <ul className="list-disc list-inside space-y-1">
+                {ships.map((s) => <li key={s}>{s}</li>)}
+                </ul>
+            ) : (
+                <p className="text-gray-600">None yet</p>
+            )}
+            </div>
+        );
+        }
 
     return (
         <div className="page">
-            <h1 className="h1">
-            <span className="bg-gradient-to-r from-rose-500 via-pink-500 to-indigo-500 bg-clip-text text-transparent">
-                Sink ’Em 🚢
-            </span>
-            </h1>
-            <p className="subtext">
-            The Classic Naval Combat Game
-            </p>
+            {showHeader && (
+            <Header
+                title="Sink ’Em 🚢"
+                displayName={displayName}
+                opponentName={opponentDisplayName.current}
+                gameCode={gameCode}
+                userMessage={userMessage}
+                timer={timer}
+                isMyFireTurn={isMyFireTurn && !switchTurnsCooldown}
+                onHome={goHome}
+            />
+            )}
+        <main className="flex-1 w-full flex flex-col items-center justify-center px-4">
+            {!showHeader && (
+                <div className="text-center">
+                    <h1 className="h1">
+                    <span className="bg-gradient-to-r from-rose-500 via-pink-500 to-indigo-500 bg-clip-text text-transparent">
+                        Sink ’Em 🚢
+                    </span>
+                    </h1>
+                    <p className="subtext">The Classic Naval Combat Game</p>
+                    {/* {userMessage} */}
+                </div>
+            )}
+
+
+            {userMessage}
+            {/* <br /> */}
 
             {/* Create new or join existing game */}
-            {userMessage}
             {!gameCreated && !joiningGame && (
                 <div className="card-empty w-full max-w-lg mx-auto">
                     <div className="grid gap-3">
@@ -386,43 +437,96 @@ function App() {
                 </div>
             ) : ''}
 
-            {/* Your turn to guess */}
-            {isFiring && isMyFireTurn ?
-                (<div className="flex flex-col items-center space-y-4">
-                        { !switchTurnsCooldown ? (<p>Time remaining: {timer} </p>) : '' }
-                        <p> Ships you've sunk: {oppSunkShips.map((ship, index) => {
-                            if (index===oppSunkShips.length-1){
-                                return ship
-                            } else {
-                                return ship + ", "
-                            }
-                        })} </p>
-                        <p> Your Targeting Grid: </p>
-                        <BoardWithAxes>
-                            <Grid gridVals={firingGridVals} handleSquareChoice={updateSquareChoiceFiring} selected={firingCoords} isForPlacing={false} ></Grid>
-                        </BoardWithAxes>
-                        { !switchTurnsCooldown ? <button className ="btn" onClick={submitFiringCoords} disabled={!firingCoords}> Submit Fire Location</button>  : '' }
+            {/* your turn to fire */}
+            {isFiring && isMyFireTurn && (
+                <div className="mx-auto max-w-6xl px-4">
+                    <div className="w-full text-center mb-4">
+                        {!switchTurnsCooldown && <p>Time remaining ⏳: {timer}</p>}
                     </div>
-                )
-                : ''}
+                    <div className="flex flex-row items-start gap-8">
+                    {/* headings centered + board */}
+                    <div className="flex-1">
+                        <div className="text-center space-y-2">
+                        <p className="h3">Your Targeting Grid:</p>
+                        </div>
 
-            {/* Opponent's turn to guess */}
-            {isFiring && !isMyFireTurn ?
-                (<div className="flex flex-col items-center space-y-4">
-                        <p> Your sunken ships: {personalSunkShips.map((ship, index) => {
-                            if (index===personalSunkShips.length-1){
-                                return ship
-                            } else {
-                                return ship + ", "
-                            }
-                        })} </p>
-                        <p> Your Fleet Grid: </p>
+                        <div className="flex justify-center mt-2">
                         <BoardWithAxes>
-                            <Grid gridVals={placingGridVals} handleSquareChoice={() => console.log(`Clicked square`)} isForPlacing={false} ></Grid>
+                            <Grid
+                            gridVals={firingGridVals}
+                            handleSquareChoice={updateSquareChoiceFiring}
+                            selected={firingCoords}
+                            isForPlacing={false}
+                            isFleetGrid={false}
+                            />
                         </BoardWithAxes>
+                        </div>
+
+                        {!switchTurnsCooldown && (
+                        <div className="flex justify-center mt-3">
+                            <button className="btn" onClick={submitFiringCoords} disabled={!firingCoords}>
+                            Submit Fire Location
+                            </button>
+                        </div>
+                        )}
                     </div>
-                )
-                : ''}
+
+                    {/* stacked cards */}
+                    <div className="flex flex-col gap-4 self-start mt-30">
+                        <div className="card-empty w-56 p-3 text-sm">
+                        <h3 className="font-semibold mb-2">Legend</h3>
+                        <ul className="space-y-1">
+                            <li>💥 = Hit</li>
+                            <li>🌊 = Miss</li>
+                        </ul>
+                        </div>
+
+                        {/* Ships you've sunk (against opponent) */}
+                        <SunkenShipsCard title="Ships You've Sunk" ships={oppSunkShips} />
+                    </div>
+                </div>
+            </div>
+            )}
+
+            {/* oppenents turn to fire */}
+            {isFiring && !isMyFireTurn && (
+                <div className="mx-auto max-w-6xl px-4">
+                    <div className="flex flex-row items-start gap-8">
+                    {/* LEFT: headings centered + board */}
+                    <div className="flex-1">
+                        <div className="text-center space-y-2">
+                        <p className="h3">Your Fleet Grid:</p>
+                        </div>
+
+                        <div className="flex justify-center mt-2">
+                        <BoardWithAxes>
+                            <Grid
+                            gridVals={placingGridVals}
+                            handleSquareChoice={() => {}}
+                            isForPlacing={false}
+                            isFleetGrid={true}
+                            />
+                        </BoardWithAxes>
+                        </div>
+                    </div>
+
+                    {/* stacked cards - legend and sunken ships*/}
+                    <div className="flex flex-col gap-4 self-start mt-30">
+                        <div className="card-empty w-56 p-3 text-sm">
+                        <h3 className="font-semibold mb-2">Legend</h3>
+                        <ul className="space-y-1">
+                            <li>💥 = Hit</li>
+                            <li>🌊 = Miss</li>
+                        </ul>
+                        </div>
+
+                        {/* show your sunken ships */}
+                        <SunkenShipsCard title="Your Sunken Ships" ships={personalSunkShips} />
+                    </div>
+                    </div>
+                </div>
+            )}
+            
             {/* game over */}
             {isGameEnded ? (
                 <div className="flex flex-col items-center space-y-4">
@@ -433,7 +537,8 @@ function App() {
                 </div>
             ) : ''
             }
-        </div>
+        </main>
+    </div>
     );
 }
 

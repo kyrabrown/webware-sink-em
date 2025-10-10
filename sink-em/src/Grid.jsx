@@ -1,12 +1,15 @@
 import "./App.css";
 
 
-function GridSquare({ row, col, onClick, value, isSelected, isForPlacing }) {
+function GridSquare({ row, col, onClick, value, isSelected, isForPlacing, isFleetGrid }) {
   
   let color = 'yellow'
 
   //get background color
   if(isForPlacing && value) {
+    color = '#0b84ff'
+  }
+  else if(isFleetGrid && value != '🌊' && value != null) {
     color = '#0b84ff'
   }
   else if(!isForPlacing && isSelected) {
@@ -28,12 +31,20 @@ function GridSquare({ row, col, onClick, value, isSelected, isForPlacing }) {
 }
 
 
-export default function Grid({gridVals, handleSquareChoice, selected, isForPlacing}) {
+export default function Grid({gridVals, handleSquareChoice, selected, isForPlacing, isFleetGrid}) {
 
   // Handle square click
   const handleClick = (row, col) => {
     handleSquareChoice(row, col)
   };
+
+  // render emojis for hits and misses
+  const renderSymbol = (val) => {
+    if (val === 'H') return '💥';  // hit
+    if (val === 'M') return '🌊';  // miss
+    return val;
+  };
+
 
   return (
     // <div className="card">
@@ -44,10 +55,11 @@ export default function Grid({gridVals, handleSquareChoice, selected, isForPlaci
               key={`${rowIndex}-${colIndex}`}
               row={rowIndex}
               col={colIndex}
-              value={value}
+              value={renderSymbol(value)}
               onClick={handleClick}
               isSelected={selected && selected.x === rowIndex && selected.y ===colIndex}
               isForPlacing={isForPlacing}
+              isFleetGrid={isFleetGrid}
           />
           ))
         )}
