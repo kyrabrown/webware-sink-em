@@ -37,4 +37,4 @@ The create game feature creates a game code the join game field accepts, and bot
 - CSS used for visual styling
 - High contrast colors used against a light background to ensure elements are visible for users with low vision
 - Descriptive and clear instructions for users in game
-- Contrasting keyboard focus on elements selected via keyboard to clarity for keyboard users
+- Contrasting keyboard focus on elements selected via keyboard to provide clarity for keyboard users
