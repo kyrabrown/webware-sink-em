@@ -8,7 +8,7 @@ https://webware-sink-em.onrender.com/
 
 Our group created a battleship game named Sink 'Em. It includes a create/join game feature for two players to play together, a placement phase where players decide where to place their ships on a grid, and a firing phase where players guess where their opponent's ship might be. Our application supports multiple on-going games running in parallel through the use of game codes, and will notify users to reset the game if their opponent disconnects. 
 
-The create game feature creates a game code the join game field accepts, and both pages generate a name for the player which can be modified if desired. When both players click "Ready," the placement stage begins and gives players 5 ships to place anywhere on the board, allowing them to rotate them both horizontally and vertically. The firing stage allows players to select a square to guess (within 30 seconds, otherwise it switches to the opponent's turn), submit when ready, and lets both players know if the guess was a hit or miss. While waiting for your turn, the player can see the hits and misses of their opponent. When a ship has been sunk or when a player has won, the server notifies the users. Everything is brought together with visuals via Tailwind. Please use this application with your browser in "Light Mode."
+The create game feature creates a game code the join game field accepts, and both pages generate a name for the player which can be modified if desired. When both players click "Ready," the placement stage begins and gives players 5 ships to place anywhere on the board, allowing them to rotate them both horizontally and vertically. The firing stage allows players to select a square to guess (within 30 seconds, otherwise it switches to the opponent's turn), submit when ready, and lets both players know if the guess was a hit or miss. While waiting for your turn, the player can see the hits and misses of their opponent. When a ship has been sunk or when a player has won, the server notifies the users. Everything is brought together with visuals via Tailwind. Please use this application with your browser in full screen.  Can be used in dark or light mode.
 
 ## Technologies Used:
 
@@ -30,12 +30,12 @@ The create game feature creates a game code the join game field accepts, and bot
 - **Andreas Keating** : 
 - **Ceci Herriman** : Set up prototype with framework for communication, grid, and game stages. Further helped work on server/client communication for directing game state, architecture for managing necessary player/game data, and integrating placing phase with firing phase. Responsible for reviewing PRs.
 - **Christopher Yon** : 
-- **Kyra Brown** : 
+- **Kyra Brown** : Installed and implemented Tailwind for project.  Set up index.css file to have different classes to use.  Integrated frontend with user logic and functionaltiy.  Created components like header, board axis, hit and miss icons, updating user statements and data to be visible.  Helped with debugging.
 - **Kelsey Bishqemi** : Create/join game funtion, frontend firing
 
 ## Accessibility Features
 
 - CSS used for visual styling
-- High contrast colors used against a light background to ensure elements are visible for users with low vision
+- High contrast colors used against a light background to ensure elements are visible for users with low vision (contrast maintainted for both dark and light mode)
 - Descriptive and clear instructions for users in game
 - Contrasting keyboard focus on elements selected via keyboard to provide clarity for keyboard users
