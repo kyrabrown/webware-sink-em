@@ -29,13 +29,13 @@ The create game feature creates a game code the join game field accepts, and bot
 
 - **Andreas Keating** : 
 - **Ceci Herriman** : Set up prototype with framework for communication, grid, and game stages. Further helped work on server/client communication for directing game state, architecture for managing necessary player/game data, and integrating placing phase with firing phase. Responsible for reviewing PRs.
-- **Christopher Yon** : 
-- **Kyra Brown** : Installed and implemented Tailwind for project.  Set up index.css file to have different classes to use.  Integrated frontend with user logic and functionaltiy.  Created components like header, board axis, hit and miss icons, updating user statements and data to be visible.  Helped with debugging.
-- **Kelsey Bishqemi** : Create/join game funtion, frontend firing
+- **Christopher Yon** : Implemented storing games in MongoDB, and having multiple games running at once on the same server. Adapted create/join game functionality to use MongoDB object IDs as codes. Made initial server implementation much more resilient to edge cases, such as a player disconnecting during the middle of a game. Implemented display name functionality, prefilled with a random adjective + animal.  
+- **Kyra Brown** : Installed and implemented Tailwind for project.  Set up index.css file to have different classes to use.  Integrated frontend with user logic and functionality.  Created components like header, board axis, hit and miss icons, updating user statements and data to be visible.  Helped with debugging.
+- **Kelsey Bishqemi** : Create/join game function, frontend firing
 
 ## Accessibility Features
 
 - CSS used for visual styling
-- High contrast colors used against a light background to ensure elements are visible for users with low vision (contrast maintainted for both dark and light mode)
+- High contrast colors used against a light background to ensure elements are visible for users with low vision (contrast maintained for both dark and light mode)
 - Descriptive and clear instructions for users in game
 - Contrasting keyboard focus on elements selected via keyboard to provide clarity for keyboard users
