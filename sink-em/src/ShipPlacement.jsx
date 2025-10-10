@@ -230,7 +230,6 @@ export default function ShipPlacement({ onDone }) {
                 </div>
             </BoardWithAxes>
 
-
                 <div className="card-empty w-full max-w-lg mx-auto">
                     <div style={{ textAlign: "left" }}>
                         <div>

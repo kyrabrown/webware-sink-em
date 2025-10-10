@@ -35,6 +35,14 @@ export default function Grid({gridVals, handleSquareChoice, selected, isForPlaci
     handleSquareChoice(row, col)
   };
 
+  // render emojis for hits and misses
+  const renderSymbol = (val) => {
+    if (val === 'H') return '💥';  // hit
+    if (val === 'M') return '🌊';  // miss
+    return val;
+  };
+
+
   return (
     // <div className="card">
       <div className="board-grid">
@@ -44,7 +52,7 @@ export default function Grid({gridVals, handleSquareChoice, selected, isForPlaci
               key={`${rowIndex}-${colIndex}`}
               row={rowIndex}
               col={colIndex}
-              value={value}
+              value={renderSymbol(value)}
               onClick={handleClick}
               isSelected={selected && selected.x === rowIndex && selected.y ===colIndex}
               isForPlacing={isForPlacing}
