@@ -33,7 +33,7 @@ The create game feature creates a game code the join game field accepts, and bot
 - **Ceci Herriman** : Set up prototype with framework for communication, grid, and game stages. Further helped work on server/client communication for directing game state, architecture for managing necessary player/game data, and integrating placing phase with firing phase. Responsible for reviewing PRs.
 - **Christopher Yon** : Adapted initial WebSocket implementation to use express-ws, allowing both web requests and WebSocket requests to be handled by the single backend server. Implemented storing games in MongoDB, and having multiple games running at once on the same server. Adapted create/join game functionality to use MongoDB object IDs as codes. Made initial server implementation much more resilient to edge cases, such as a player disconnecting during the middle of a game. Implemented display name functionality, prefilled with a random adjective + animal.  
 - **Kyra Brown** : Installed and implemented Tailwind for project.  Set up index.css file to have different classes to use.  Integrated frontend with user logic and functionality.  Created components like header, board axis, hit and miss icons, updating user statements and data to be visible.  Helped with debugging.
-- **Kelsey Bishqemi** : Create/join game function, frontend firing
+- **Kelsey Bishqemi** : Built original create/join game functionality (no database implementation), worked on front end firing stage, created timer for rounds that skips turn when it runs out, added selection highlight for when a square on the grid was selected, made it so guess can only be submitted (guess button gan only be pressed) once a tile is selected.
 
 ## Accessibility Features
 
